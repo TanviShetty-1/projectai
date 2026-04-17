@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ProjectAI v3 — Intelligent Project Management</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #f7f6f2;
+  --surface: #ffffff;
+  --surface2: #f0efe9;
+  --border: rgba(0,0,0,0.08);
+  --border-md: rgba(0,0,0,0.13);
+  --text: #1a1917;
+  --text2: #6b6960;
+  --text3: #9b9a94;
+  --accent: #5b4fcf;
+  --accent-light: #eeecfc;
+  --accent-mid: #a09be0;
+  --green: #16a374;
+  --green-light: #e0f5ed;
+  --amber: #d97706;
+  --amber-light: #fef3c7;
+  --red: #dc2626;
+  --red-light: #fee2e2;
+  --blue: #2563eb;
+  --blue-light: #dbeafe;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --sidebar-w: 260px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;font-size:14px}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;flex-shrink:0}
+.sidebar-header{padding:20px 18px 14px;border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:9px;margin-bottom:4px}
+.logo-mark{width:30px;height:30px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.logo-mark svg{width:16px;height:16px;stroke:white;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.logo-name{font-size:15px;font-weight:500;letter-spacing:-.3px}
+.logo-tag{font-size:11px;color:var(--text3);font-family:var(--mono)}
+
+.sidebar-section{padding:14px 12px 6px;font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+.proj-list{flex:1;overflow-y:auto;padding:0 8px}
+.proj-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius);cursor:pointer;margin-bottom:2px;transition:all .15s;border:1px solid transparent}
+.proj-item:hover{background:var(--surface2)}
+.proj-item.active{background:var(--accent-light);border-color:rgba(91,79,207,.15)}
+.proj-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.proj-item-name{flex:1;font-size:13px;font-weight:400;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.proj-item.active .proj-item-name{color:var(--accent);font-weight:500}
+.proj-badge{font-size:10px;padding:2px 6px;border-radius:6px;background:var(--surface2);color:var(--text3)}
+.proj-item.active .proj-badge{background:rgba(91,79,207,.12);color:var(--accent)}
+
+.add-proj-btn{margin:8px;padding:9px 14px;border-radius:var(--radius);border:1.5px dashed var(--border-md);background:transparent;color:var(--text2);font-size:12.5px;font-family:var(--font);cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .15s;width:calc(100% - 16px)}
+.add-proj-btn:hover{background:var(--surface2);border-color:var(--accent-mid);color:var(--accent)}
+.add-proj-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+
+.sidebar-footer{padding:12px;border-top:1px solid var(--border)}
+.overview-btn{width:100%;padding:8px 12px;border-radius:var(--radius);border:1px solid var(--border-md);background:transparent;color:var(--text2);font-size:12.5px;font-family:var(--font);cursor:pointer;text-align:left;transition:all .15s}
+.overview-btn:hover,.overview-btn.active{background:var(--accent-light);color:var(--accent);border-color:rgba(91,79,207,.2)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.main-header{padding:16px 24px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.main-title{font-size:16px;font-weight:500;letter-spacing:-.2px}
+.main-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.header-tabs{display:flex;gap:3px;background:var(--surface2);padding:3px;border-radius:var(--radius);flex-wrap:wrap}
+.htab{font-size:12px;padding:5px 12px;border-radius:7px;border:none;background:transparent;color:var(--text2);cursor:pointer;font-family:var(--font);transition:all .15s;white-space:nowrap}
+.htab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.main-body{flex:1;overflow-y:auto;padding:20px 24px}
+
+/* MODALS */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-xl);padding:24px;width:440px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.18)}
+.modal h3{font-size:16px;font-weight:500;margin-bottom:16px}
+.modal label{font-size:12px;color:var(--text2);display:block;margin-bottom:5px;margin-top:12px}
+.modal input,.modal textarea,.modal select{width:100%;padding:9px 12px;border:1px solid var(--border-md);border-radius:var(--radius);font-family:var(--font);font-size:13px;background:var(--surface2);color:var(--text);outline:none}
+.modal input:focus,.modal textarea:focus{border-color:var(--accent)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.btn-cancel{padding:8px 16px;border-radius:var(--radius);border:1px solid var(--border-md);background:transparent;color:var(--text2);font-family:var(--font);font-size:13px;cursor:pointer}
+.btn-primary{padding:8px 18px;border-radius:var(--radius);border:none;background:var(--accent);color:white;font-family:var(--font);font-size:13px;cursor:pointer;font-weight:500}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+
+/* OVERVIEW */
+.overview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.ov-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;cursor:pointer;transition:all .2s}
+.ov-card:hover{border-color:var(--accent-mid);transform:translateY(-1px)}
+.ov-card-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.ov-card-dot{width:10px;height:10px;border-radius:50%}
+.ov-card-name{font-size:13px;font-weight:500;flex:1}
+.ov-card-status{font-size:10px;padding:2px 8px;border-radius:6px;font-weight:500}
+.ov-prog-bar{height:4px;background:var(--surface2);border-radius:2px;margin-bottom:8px}
+.ov-prog-fill{height:100%;border-radius:2px;transition:width .6s ease}
+.ov-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--text3)}
+.big-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.bm{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px}
+.bm-label{font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.bm-val{font-size:22px;font-weight:500}
+.bm-sub{font-size:11px;margin-top:3px}
+
+/* DASHBOARD */
+.metrics-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.metric-card{background:var(--surface2);border-radius:var(--radius);padding:12px 14px}
+.mc-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.mc-val{font-size:20px;font-weight:500}
+.mc-sub{font-size:11px;margin-top:2px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px}
+.card-title{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.prow{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}
+.prow:last-child{border-bottom:none}
+.pdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.pname{flex:1;font-size:12.5px}
+.ppct{font-size:11px;color:var(--text3);width:28px;text-align:right}
+.pbar{height:3px;background:var(--surface2);border-radius:2px;margin-top:2px}
+.pbfill{height:100%;border-radius:2px}
+.insight-item{display:flex;gap:8px;align-items:flex-start;padding:8px;border-radius:var(--radius);margin-bottom:6px}
+.insight-item:last-child{margin-bottom:0}
+.ii-icon{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.ii-text{font-size:12.5px;line-height:1.4}
+.ii-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.ins-w{background:#fff7ed}.ins-w .ii-icon{background:#fed7aa;color:#92400e}
+.ins-g{background:#f0fdf4}.ins-g .ii-icon{background:#bbf7d0;color:#166534}
+.ins-b{background:#eff6ff}.ins-b .ii-icon{background:#bfdbfe;color:#1e40af}
+.task-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)}
+.task-item:last-child{border-bottom:none}
+.tchk{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--border-md);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.tchk.done{background:var(--accent);border-color:var(--accent)}
+.tname{flex:1;font-size:12.5px}
+.tname.done{text-decoration:line-through;color:var(--text3)}
+.tav{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:500}
+.rprow{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12.5px}
+.rprow:last-child{border-bottom:none}
+.rpill{font-size:10px;padding:2px 7px;border-radius:6px;font-weight:500;white-space:nowrap}
+.trow{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)}
+.trow:last-child{border-bottom:none}
+.twbar{width:64px;height:4px;border-radius:2px;background:var(--surface2)}
+.twfill{height:100%;border-radius:2px}
+
+/* CHAT */
+.chat-messages{display:flex;flex-direction:column;gap:10px;min-height:220px;margin-bottom:12px}
+.cmsg{max-width:80%;padding:10px 13px;border-radius:12px;font-size:13px;line-height:1.5}
+.cmsg-user{align-self:flex-end;background:var(--accent);color:white;border-radius:12px 12px 3px 12px}
+.cmsg-ai{align-self:flex-start;background:var(--surface2);color:var(--text);border-radius:12px 12px 12px 3px}
+.cmsg-ai.thinking{color:var(--text3);font-style:italic}
+.chat-input-row{display:flex;gap:8px}
+.chat-input-row input{flex:1;padding:9px 13px;border:1px solid var(--border-md);border-radius:var(--radius);font-family:var(--font);font-size:13px;background:var(--surface2);color:var(--text);outline:none}
+.chat-input-row input:focus{border-color:var(--accent)}
+.quick-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{font-size:11.5px;padding:5px 11px;border:1px solid var(--border-md);border-radius:20px;background:var(--surface2);color:var(--text2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--accent-mid);color:var(--accent)}
+.send-btn{padding:9px 16px;background:var(--accent);color:white;border:none;border-radius:var(--radius);font-family:var(--font);font-size:13px;cursor:pointer;font-weight:500}
+.send-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* REPORTS */
+.report-output{background:var(--surface2);border-radius:var(--radius);padding:14px;font-size:13px;line-height:1.7;min-height:80px;white-space:pre-wrap;color:var(--text);margin-top:12px}
+.report-output.empty{color:var(--text3);font-style:italic}
+.row-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row-controls select{padding:7px 10px;border:1px solid var(--border-md);border-radius:var(--radius);font-family:var(--font);font-size:12.5px;background:var(--surface2);color:var(--text);outline:none}
+.gen-btn{padding:8px 16px;background:var(--accent);color:white;border:none;border-radius:var(--radius);font-family:var(--font);font-size:13px;cursor:pointer;font-weight:500}
+.gen-btn:disabled{opacity:.5;cursor:not-allowed}
+.copy-btn{padding:7px 14px;background:var(--surface2);color:var(--text2);border:1px solid var(--border-md);border-radius:var(--radius);font-family:var(--font);font-size:12px;cursor:pointer;margin-top:8px}
+
+/* MEETING */
+.meeting-ta{width:100%;min-height:100px;padding:10px;border:1px solid var(--border-md);border-radius:var(--radius);font-family:var(--font);font-size:12.5px;background:var(--surface2);color:var(--text);resize:vertical;line-height:1.5;outline:none}
+.meeting-ta:focus{border-color:var(--accent)}
+.action-card{display:flex;gap:8px;padding:9px;background:var(--surface2);border-radius:var(--radius);margin-bottom:6px}
+.ac-num{width:20px;height:20px;border-radius:50%;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0}
+.ac-body{flex:1;font-size:12.5px;line-height:1.4}
+.ac-meta{font-size:11px;color:var(--text3);margin-top:3px}
+
+/* LINKEDIN */
+.li-prompt-area{width:100%;padding:10px 12px;border:1px solid var(--border-md);border-radius:var(--radius);font-family:var(--font);font-size:13px;background:var(--surface2);color:var(--text);resize:vertical;min-height:80px;outline:none;line-height:1.5;margin-bottom:10px}
+.li-prompt-area:focus{border-color:var(--accent)}
+.li-preview{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-top:14px}
+.li-pre-header{display:flex;align-items:center;gap:10px;padding:14px}
+.li-av{width:38px;height:38px;border-radius:50%;background:#2563eb;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:500}
+.li-uname{font-size:13px;font-weight:500}
+.li-utitle{font-size:11px;color:var(--text3)}
+.li-banner{background:var(--accent-light);margin:0 14px 12px;border-radius:var(--radius);padding:28px;text-align:center}
+.li-banner-t{font-size:17px;font-weight:500;color:var(--accent);margin-bottom:4px}
+.li-banner-s{font-size:11px;color:var(--accent-mid)}
+.li-post-body{padding:0 14px 14px;font-size:13px;line-height:1.65;white-space:pre-wrap;color:var(--text)}
+.li-actions-row{display:flex;gap:16px;padding:10px 14px;border-top:1px solid var(--border)}
+.li-act{font-size:12px;color:var(--text3);cursor:pointer}
+.preset-btns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.preset-btn{font-size:11.5px;padding:5px 11px;border:1px solid var(--border-md);border-radius:20px;background:var(--surface2);color:var(--text2);cursor:pointer;transition:all .15s}
+.preset-btn:hover{background:var(--accent-light);color:var(--accent);border-color:var(--accent-mid)}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-state h3{font-size:16px;font-weight:500;color:var(--text2);margin-bottom:6px}
+.empty-state p{font-size:13px;line-height:1.6}
+.section-view{display:none}
+.section-view.active{display:block}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div style="background:#166534;color:white;font-size:10px;text-align:center;padding:4px;font-family:var(--mono);letter-spacing:.05em">
+  VERSION 3 — LOCAL TASK ENGINE ACTIVE
+</div>
+<div class="sidebar-header">
+    <div class="logo">
+      <div class="logo-mark"><svg viewBox="0 0 20 20"><polyline points="2,14 7,9 11,13 18,6"/><circle cx="18" cy="6" r="2" fill="white" stroke="none"/></svg></div>
+      <div class="logo-name">ProjectAI</div>
+    </div>
+    <div class="logo-tag">Intelligent PM platform</div>
+  </div>
+
+  <div class="sidebar-section">Workspace</div>
+  <div style="padding:0 8px 4px">
+    <button class="overview-btn active" id="overviewBtn" onclick="showOverview()">All projects overview</button>
+  </div>
+
+  <div class="sidebar-section">Projects</div>
+  <div class="proj-list" id="projList"></div>
+
+  <button class="add-proj-btn" onclick="openAddModal()">
+    <svg viewBox="0 0 16 16"><line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/></svg>
+    Add new project
+  </button>
+
+  <div class="sidebar-footer">
+    <div style="font-size:10px;color:var(--text3);text-align:center;font-family:var(--mono)">Powered by Claude AI</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="main-header" id="mainHeader">
+    <div>
+      <div class="main-title" id="mainTitle">All projects</div>
+      <div class="main-sub" id="mainSub">Overview of your workspace</div>
+    </div>
+    <div class="header-tabs" id="headerTabs" style="display:none">
+      <button class="htab active" onclick="switchTab('dashboard',this)">Dashboard</button>
+      <button class="htab" onclick="switchTab('assistant',this)">AI assistant</button>
+      <button class="htab" onclick="switchTab('reports',this)">Status reports</button>
+      <button class="htab" onclick="switchTab('meeting',this)">Meeting AI</button>
+      <button class="htab" onclick="switchTab('linkedin',this)">LinkedIn post</button>
+    </div>
+  </div>
+
+  <div class="main-body">
+    <!-- OVERVIEW -->
+    <div id="view-overview" class="section-view active">
+      <div class="big-metrics" id="overviewMetrics"></div>
+      <div class="overview-grid" id="overviewGrid"></div>
+    </div>
+
+    <!-- PROJECT VIEWS -->
+    <div id="view-project" class="section-view">
+      <div id="tab-dashboard"></div>
+      <div id="tab-assistant" style="display:none"></div>
+      <div id="tab-reports" style="display:none"></div>
+      <div id="tab-meeting" style="display:none"></div>
+      <div id="tab-linkedin" style="display:none"></div>
+    </div>
+  </div>
+</main>
+
+<!-- ADD PROJECT MODAL -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <h3>Add new project</h3>
+    <label>Project name</label>
+    <input id="newProjName" type="text" placeholder="e.g. Mobile App v3"/>
+    <label>Description</label>
+    <input id="newProjDesc" type="text" placeholder="Brief description"/>
+    <label>Status</label>
+    <select id="newProjStatus">
+      <option value="on-track">On track</option>
+      <option value="at-risk">At risk</option>
+      <option value="behind">Behind schedule</option>
+      <option value="completed">Completed</option>
+    </select>
+    <label>Progress (%)</label>
+    <input id="newProjProgress" type="number" min="0" max="100" value="0"/>
+    <label>Team lead</label>
+    <input id="newProjLead" type="text" placeholder="e.g. Sarah L."/>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeAddModal()">Cancel</button>
+      <button class="btn-primary" onclick="addProject()">Add project</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS = ['#5b4fcf','#16a374','#d97706','#2563eb','#dc2626','#7c3aed','#0891b2','#be185d'];
+let projects = [
+  {id:1,name:'Platform redesign',desc:'Full UI/UX overhaul',status:'on-track',progress:78,lead:'Sarah L.',color:'#5b4fcf',tasks:[{id:'t1',text:'Design review — homepage',done:true,owner:'SL'},{id:'t2',text:'Finalize component library',done:false,owner:'MR'},{id:'t3',text:'Responsive layout QA',done:false,owner:'AK'},{id:'t4',text:'Stakeholder sign-off',done:true,owner:'JT'}],risks:[{level:'Med',text:'Scope creep in sidebar nav'},{level:'Low',text:'Font license renewal'}],team:[{initials:'SL',name:'Sarah L.',load:88,color:'#ede9fe'},{initials:'MR',name:'Marcus R.',load:65,color:'#dcfce7'},{initials:'AK',name:'Aisha K.',load:50,color:'#fef9c3'}]},
+  {id:2,name:'API migration',desc:'Move to REST v3 endpoints',status:'at-risk',progress:45,lead:'Marcus R.',color:'#d97706',tasks:[{id:'t5',text:'Audit legacy endpoints',done:true,owner:'MR'},{id:'t6',text:'Write migration scripts',done:false,owner:'PW'},{id:'t7',text:'Integration tests',done:false,owner:'JT'},{id:'t8',text:'Rollback plan doc',done:false,owner:'MR'}],risks:[{level:'High',text:'Sprint scope 23% over estimate'},{level:'High',text:'Vendor API rate limits'},{level:'Med',text:'No staging environment yet'}],team:[{initials:'MR',name:'Marcus R.',load:90,color:'#fef9c3'},{initials:'PW',name:'Priya W.',load:72,color:'#fce7f3'},{initials:'JT',name:'James T.',load:60,color:'#dbeafe'}]},
+  {id:3,name:'Mobile app v3',desc:'iOS & Android release',status:'behind',progress:62,lead:'Aisha K.',color:'#dc2626',tasks:[{id:'t9',text:'Push notification setup',done:true,owner:'AK'},{id:'t10',text:'Offline mode support',done:false,owner:'SL'},{id:'t11',text:'App store assets',done:false,owner:'PW'},{id:'t12',text:'Beta testing round 2',done:false,owner:'AK'}],risks:[{level:'High',text:'6 days behind schedule'},{level:'Med',text:'Logo assets pending from design'},{level:'Low',text:'App store review time'}],team:[{initials:'AK',name:'Aisha K.',load:95,color:'#fee2e2'},{initials:'SL',name:'Sarah L.',load:70,color:'#ede9fe'},{initials:'PW',name:'Priya W.',load:45,color:'#fce7f3'}]},
+  {id:4,name:'Data pipeline',desc:'ETL + real-time analytics',status:'on-track',progress:91,lead:'James T.',color:'#2563eb',tasks:[{id:'t13',text:'Kafka cluster setup',done:true,owner:'JT'},{id:'t14',text:'Dashboard connectors',done:true,owner:'MR'},{id:'t15',text:'Load testing',done:false,owner:'JT'},{id:'t16',text:'Documentation',done:false,owner:'AK'}],risks:[{level:'Low',text:'Cloud cost monitoring'},{level:'Low',text:'API deprecation in Q4'}],team:[{initials:'JT',name:'James T.',load:80,color:'#dbeafe'},{initials:'MR',name:'Marcus R.',load:55,color:'#dcfce7'}]}
+];
+let currentProjectId = null;
+let currentTab = 'dashboard';
+
+function getProject(id){return projects.find(p=>p.id===id)}
+function statusColor(s){return s==='on-track'?'#16a374':s==='at-risk'?'#d97706':s==='behind'?'#dc2626':'#6b7280'}
+function statusBg(s){return s==='on-track'?'#f0fdf4':s==='at-risk'?'#fffbeb':s==='behind'?'#fef2f2':'#f9fafb'}
+function statusLabel(s){return s==='on-track'?'On track':s==='at-risk'?'At risk':s==='behind'?'Behind':'Completed'}
+
+function renderSidebar(){
+  const list=document.getElementById('projList');
+  list.innerHTML='';
+  projects.forEach(p=>{
+    const el=document.createElement('div');
+    el.className='proj-item'+(currentProjectId===p.id?' active':'');
+    el.onclick=()=>openProject(p.id);
+    el.innerHTML=`<div class="proj-dot" style="background:${p.color}"></div><span class="proj-item-name">${p.name}</span><span class="proj-badge">${p.progress}%</span>`;
+    list.appendChild(el);
+  });
+}
+
+function showOverview(){
+  currentProjectId=null;
+  document.getElementById('view-overview').classList.add('active');
+  document.getElementById('view-project').classList.remove('active');
+  document.getElementById('headerTabs').style.display='none';
+  document.getElementById('mainTitle').textContent='All projects';
+  document.getElementById('mainSub').textContent='Workspace overview';
+  document.getElementById('overviewBtn').classList.add('active');
+  renderSidebar();
+  renderOverview();
+}
+
+function renderOverview(){
+  const total=projects.length;
+  const onTrack=projects.filter(p=>p.status==='on-track'||p.status==='completed').length;
+  const atRisk=projects.filter(p=>p.status==='at-risk'||p.status==='behind').length;
+  const avgProg=Math.round(projects.reduce((s,p)=>s+p.progress,0)/total);
+  document.getElementById('overviewMetrics').innerHTML=`
+    <div class="bm"><div class="bm-label">Total projects</div><div class="bm-val">${total}</div><div class="bm-sub" style="color:var(--text3)">Active workspace</div></div>
+    <div class="bm"><div class="bm-label">On track</div><div class="bm-val" style="color:#16a374">${onTrack}</div><div class="bm-sub" style="color:#16a374">Healthy delivery</div></div>
+    <div class="bm"><div class="bm-label">Need attention</div><div class="bm-val" style="color:#d97706">${atRisk}</div><div class="bm-sub" style="color:#d97706">Review required</div></div>
+    <div class="bm"><div class="bm-label">Avg progress</div><div class="bm-val">${avgProg}%</div><div class="bm-sub" style="color:var(--text3)">Across all projects</div></div>`;
+  const grid=document.getElementById('overviewGrid');
+  grid.innerHTML='';
+  projects.forEach(p=>{
+    const el=document.createElement('div');
+    el.className='ov-card';
+    el.onclick=()=>openProject(p.id);
+    el.innerHTML=`
+      <div class="ov-card-header">
+        <div class="ov-card-dot" style="background:${p.color}"></div>
+        <span class="ov-card-name">${p.name}</span>
+        <span class="ov-card-status" style="background:${statusBg(p.status)};color:${statusColor(p.status)}">${statusLabel(p.status)}</span>
+      </div>
+      <div class="ov-prog-bar"><div class="ov-prog-fill" style="width:${p.progress}%;background:${p.color}"></div></div>
+      <div class="ov-meta"><span>Lead: ${p.lead}</span><span>${p.progress}% complete</span></div>`;
+    grid.appendChild(el);
+  });
+}
+
+function openProject(id){
+  currentProjectId=id;
+  const p=getProject(id);
+  document.getElementById('view-overview').classList.remove('active');
+  document.getElementById('view-project').classList.add('active');
+  document.getElementById('headerTabs').style.display='flex';
+  document.getElementById('mainTitle').textContent=p.name;
+  document.getElementById('mainSub').textContent=p.desc+' · '+statusLabel(p.status);
+  document.getElementById('overviewBtn').classList.remove('active');
+  renderSidebar();
+  switchTab('dashboard', document.querySelector('.htab'));
+}
+
+function switchTab(tab, btn){
+  currentTab=tab;
+  ['dashboard','assistant','reports','meeting','linkedin'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===tab?'block':'none';
+  });
+  document.querySelectorAll('.htab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const p=getProject(currentProjectId);
+  if(!p) return;
+  if(tab==='dashboard') renderDashboard(p);
+  else if(tab==='assistant') renderAssistant(p);
+  else if(tab==='reports') renderReports(p);
+  else if(tab==='meeting') renderMeeting(p);
+  else if(tab==='linkedin') renderLinkedIn(p);
+}
+
+function renderDashboard(p){
+  const el=document.getElementById('tab-dashboard');
+  const statuses=[
+    {label:'Progress',val:p.progress+'%',sub:statusLabel(p.status),color:statusColor(p.status)},
+    {label:'Tasks done',val:p.tasks.filter(t=>t.done).length+'/'+p.tasks.length,sub:'Completed tasks',color:'var(--text)'},
+    {label:'Risks',val:p.risks.length,sub:p.risks.filter(r=>r.level==='High').length+' high priority',color:p.risks.some(r=>r.level==='High')?'#dc2626':'#16a374'},
+    {label:'Team size',val:p.team.length,sub:'Active members',color:'var(--text)'}
+  ];
+  el.innerHTML=`
+    <div class="metrics-row">${statuses.map(s=>`<div class="metric-card"><div class="mc-label">${s.label}</div><div class="mc-val" style="color:${s.color}">${s.val}</div><div class="mc-sub" style="color:var(--text3)">${s.sub}</div></div>`).join('')}</div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Progress breakdown</div>
+        <div class="prow"><div class="pdot" style="background:${p.color}"></div><div style="flex:1"><div style="display:flex;justify-content:space-between"><span class="pname">${p.name}</span><span class="ppct">${p.progress}%</span></div><div class="pbar"><div class="pbfill" style="width:${p.progress}%;background:${p.color}"></div></div></div></div>
+        <div style="padding:12px 0 6px"><div style="font-size:12px;color:var(--text3);margin-bottom:8px">Key insight</div>
+        <div class="insight-item ins-b"><div class="ii-icon">i</div><div><div class="ii-text">${p.progress>=80?'Project is in final stretch — schedule a review':'Keep momentum — '+Math.round(100-p.progress)+'% remaining'}</div><div class="ii-sub">AI recommendation</div></div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">AI insights</div>
+        ${p.status==='behind'?`<div class="insight-item ins-w"><div class="ii-icon">!</div><div><div class="ii-text">Project is behind schedule</div><div class="ii-sub">Consider reallocating resources</div></div></div>`:''}
+        ${p.status==='on-track'?`<div class="insight-item ins-g"><div class="ii-icon">✓</div><div><div class="ii-text">Project is on track for delivery</div><div class="ii-sub">Maintain current velocity</div></div></div>`:''}
+        ${p.risks.filter(r=>r.level==='High').length>0?`<div class="insight-item ins-w"><div class="ii-icon">!</div><div><div class="ii-text">${p.risks.filter(r=>r.level==='High').length} high-priority risk${p.risks.filter(r=>r.level==='High').length>1?'s':''} detected</div><div class="ii-sub">${p.risks.find(r=>r.level==='High').text}</div></div></div>`:''}
+        <div class="insight-item ins-b"><div class="ii-icon">★</div><div><div class="ii-text">${p.tasks.filter(t=>t.done).length} of ${p.tasks.length} tasks completed this sprint</div><div class="ii-sub">Team is ${Math.round(p.tasks.filter(t=>t.done).length/p.tasks.length*100)}% through the backlog</div></div></div>
+      </div>
+    </div>
+    <div class="three-col">
+      <div class="card">
+        <div class="card-title">Tasks</div>
+        ${p.tasks.map(t=>`<div class="task-item" style="flex-direction:column;align-items:flex-start;gap:4px;padding:8px 0">
+  <div style="display:flex;align-items:center;gap:8px;width:100%">
+    <div class="tchk ${t.done?'done':''}" onclick="toggleTask(${p.id},'${t.id}',this)">${t.done?`<svg width="9" height="9" viewBox="0 0 9 9"><path d="M1.5 4.5l2 2L7.5 2" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>`:''}</div>
+    <span class="tname ${t.done?'done':''}" style="flex:1;font-weight:500">${t.text}</span>
+    <div class="tav" style="background:#f3f0ff;color:var(--accent)">${t.owner}</div>
+  </div>
+  ${(t.due_date||t.hours||t.description)?`<div style="padding-left:23px;display:flex;flex-wrap:wrap;gap:6px;margin-top:2px">
+    ${t.due_date?`<span style="font-size:10px;background:#f0fdf4;color:#166534;padding:2px 7px;border-radius:5px">Due ${t.due_date}</span>`:''}
+    ${t.hours?`<span style="font-size:10px;background:#eff6ff;color:#1e40af;padding:2px 7px;border-radius:5px">${t.hours}h</span>`:''}
+    ${t.description?`<span style="font-size:11px;color:var(--text3);display:block;width:100%;margin-top:2px">${t.description}</span>`:''}
+  </div>`:''}
+</div>`).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title">Risk radar</div>
+        ${p.risks.map(r=>`<div class="rprow"><span class="rpill" style="background:${r.level==='High'?'#fee2e2':r.level==='Med'?'#fef3c7':'#f0fdf4'};color:${r.level==='High'?'#991b1b':r.level==='Med'?'#92400e':'#166534'}">${r.level}</span><span style="color:var(--text)">${r.text}</span></div>`).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title">Team workload</div>
+        ${p.team.map(m=>`<div class="trow"><div class="tav" style="background:${m.color};color:var(--text);width:24px;height:24px;font-size:9px">${m.initials}</div><span style="flex:1;font-size:12.5px">${m.name}</span><div class="twbar"><div class="twfill" style="width:${m.load}%;background:${m.load>85?'#dc2626':m.load>70?'#d97706':'#16a374'}"></div></div><span style="font-size:11px;color:var(--text3);width:28px;text-align:right">${m.load}%</span></div>`).join('')}
+      </div>
+    </div>
+    ${p.notes&&p.notes.length>0?`<div class="card" style="margin-bottom:12px">
+      <div class="card-title">Stakeholder notes & feedback</div>
+      ${p.notes.map(n=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><span style="font-size:10px;padding:2px 7px;border-radius:5px;background:${n.category==='stakeholder'?'#eff6ff':n.category==='feedback'?'#fef9c3':'#f0fdf4'};color:${n.category==='stakeholder'?'#1e40af':n.category==='feedback'?'#92400e':'#166534'};font-weight:500">${n.category}</span><span style="font-size:11px;color:var(--text3)">${n.date}</span></div><div style="font-size:12.5px;font-weight:500;margin-bottom:2px">${n.title}</div><div style="font-size:12px;color:var(--text2);line-height:1.5">${n.content}</div></div>`).join('')}
+    </div>`:''}`;
+}
+
+function toggleTask(projId, taskId, el){
+  const p=getProject(projId);
+  const t=p.tasks.find(t=>t.id===taskId);
+  t.done=!t.done;
+  el.classList.toggle('done',t.done);
+  el.innerHTML=t.done?`<svg width="9" height="9" viewBox="0 0 9 9"><path d="M1.5 4.5l2 2L7.5 2" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>`:'';
+  const name=el.closest('.task-item').querySelector('.tname');
+  name.classList.toggle('done',t.done);
+}
+
+function renderAssistant(p){
+  const el=document.getElementById('tab-assistant');
+  el.innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="card">
+        <div class="card-title">AI assistant — ${p.name}</div>
+        <div style="font-size:12px;padding:8px 12px;background:#eeedfe;border-radius:var(--radius);color:#3730a3;margin-bottom:10px;line-height:1.5">
+          <strong>Write actions</strong> (instant, no API): "Add a new task: [name], due 5/15, 10 hours, description: [text]" · "Update task [name] with [note]" · "Mark task [name] done" · "Add risk: [text]" · "Submit stakeholder feedback: [text]"<br>
+          <strong>Analysis questions</strong> (uses AI): "What are my main risks?" · "Will we finish on time?" · "Who is overloaded?"
+        </div>
+        <div class="quick-chips">
+          <div class="chip" onclick="sendMsg(${p.id},'What are the main risks?')">Main risks</div>
+          <div class="chip" onclick="sendMsg(${p.id},'What should I prioritize this week?')">This week</div>
+          <div class="chip" onclick="sendMsg(${p.id},'Who is overloaded?')">Team load</div>
+          <div class="chip" onclick="sendMsg(${p.id},'Predict if we finish on time.')">Deadline forecast</div>
+          <div class="chip" style="background:#f0fdf4;color:#166634;border-color:#bbf7d0" onclick="quickAddTask(${p.id})">✓ Test engine</div>
+        </div>
+        <div id="chat-${p.id}" class="chat-messages" style="min-height:200px">
+          <div class="cmsg cmsg-ai">Hi! I'm your AI assistant for <strong>${p.name}</strong>. Type any action below — tasks appear instantly in the live list below and in the Dashboard.</div>
+        </div>
+        <div class="chat-input-row">
+          <input id="chatIn-${p.id}" type="text" placeholder='e.g. "Add a new task: Get Requirements, due 5/15, 10 hours, description: Connect with stakeholders"' onkeydown="if(event.key==='Enter')sendMsg(${p.id})"/>
+          <button class="send-btn" id="sendBtn-${p.id}" onclick="sendMsg(${p.id})">Send</button>
+        </div>
+      </div>
+      <div class="card" id="live-tasks-${p.id}"></div>
+    </div>`;
+  refreshLiveTasks(p);
+}
+
+function refreshLiveTasks(p){
+  const el=document.getElementById('live-tasks-'+p.id);
+  if(!el)return;
+  el.innerHTML=`<div class="card-title">Live task list (${p.tasks.length})</div>`+
+    (p.tasks.length===0?'<div style="font-size:12px;color:var(--text3);padding:8px 0">No tasks yet. Ask the AI to add one.</div>':
+    p.tasks.map(t=>`
+      <div style="padding:7px 0;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;align-items:center;gap:7px">
+          <div style="width:13px;height:13px;border-radius:3px;background:${t.done?'var(--accent)':'transparent'};border:1.5px solid ${t.done?'var(--accent)':'var(--border-md)'};flex-shrink:0;display:flex;align-items:center;justify-content:center">
+            ${t.done?'<svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2L7 1.5" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>':''}
+          </div>
+          <span style="font-size:12.5px;font-weight:500;flex:1;${t.done?'text-decoration:line-through;color:var(--text3)':''}">${t.text}</span>
+          <span style="font-size:9px;background:#f3f0ff;color:var(--accent);padding:1px 5px;border-radius:4px">${t.owner}</span>
+        </div>
+        ${t.due_date||t.hours?`<div style="padding-left:20px;display:flex;gap:5px">
+          ${t.due_date?`<span style="font-size:10px;background:#f0fdf4;color:#166534;padding:1px 6px;border-radius:4px">Due ${t.due_date}</span>`:''}
+          ${t.hours?`<span style="font-size:10px;background:#eff6ff;color:#1e40af;padding:1px 6px;border-radius:4px">${t.hours}h</span>`:''}
+        </div>`:''}
+        ${t.description?`<div style="padding-left:20px;font-size:11px;color:var(--text3);line-height:1.4">${t.description}</div>`:''}
+      </div>`).join(''))+
+    `<button onclick="jumpToDashboard()" style="width:100%;margin-top:10px;padding:7px;font-size:12px;background:var(--surface2);color:var(--text2);border:1px solid var(--border-md);border-radius:var(--radius);cursor:pointer;font-family:var(--font)">Open full dashboard →</button>`;
+}
+
+const AI_TOOLS=[
+  {name:"add_task",description:"Add a new task to the project",input_schema:{type:"object",properties:{text:{type:"string",description:"Task name/title"},owner:{type:"string",description:"Owner initials or name (2 chars preferred)"},due_date:{type:"string",description:"Due date string e.g. '5/15'"},hours:{type:"number",description:"Capacity allocation in hours"},description:{type:"string",description:"Task description or notes"}},required:["text"]}},
+  {name:"complete_task",description:"Mark an existing task as done or not done",input_schema:{type:"object",properties:{task_name:{type:"string",description:"Partial or full name of the task to find"},done:{type:"boolean",description:"true to mark done, false to reopen"}},required:["task_name","done"]}},
+  {name:"add_risk",description:"Add a new risk to the project",input_schema:{type:"object",properties:{text:{type:"string",description:"Risk description"},level:{type:"string",enum:["High","Med","Low"],description:"Risk severity level"}},required:["text","level"]}},
+  {name:"update_progress",description:"Update the project's overall progress percentage",input_schema:{type:"object",properties:{progress:{type:"number",description:"Progress percentage 0-100"}},required:["progress"]}},
+  {name:"update_status",description:"Update the project status",input_schema:{type:"object",properties:{status:{type:"string",enum:["on-track","at-risk","behind","completed"]}},required:["status"]}},
+  {name:"add_team_member",description:"Add a team member to the project",input_schema:{type:"object",properties:{name:{type:"string"},initials:{type:"string"},load:{type:"number",description:"Workload percentage 0-100"}},required:["name","initials"]}},
+  {name:"delete_task",description:"Remove a task from the project",input_schema:{type:"object",properties:{task_name:{type:"string",description:"Partial or full name of the task to remove"}},required:["task_name"]}},
+  {name:"add_note",description:"Add a stakeholder note, feedback, or project note/update",input_schema:{type:"object",properties:{title:{type:"string",description:"Short note title"},content:{type:"string",description:"Full note content or feedback"},category:{type:"string",enum:["stakeholder","feedback","update","blocker"],description:"Note category"}},required:["title","content"]}}
+];
+
+function applyTool(p,toolName,input){
+  const msgs=[];
+  if(toolName==='add_task'){
+    const id='task_'+Date.now();
+    const initials=(input.owner||'TL').replace(/\s+/g,'').slice(0,2).toUpperCase();
+    const label=input.text+(input.due_date?' (due '+input.due_date+')':'')+(input.hours?' — '+input.hours+'h':'');
+    p.tasks.push({id,text:label,done:false,owner:initials,due_date:input.due_date||'',hours:input.hours||null,description:input.description||''});
+    msgs.push('Task added: "'+label+'"'+(input.owner?' assigned to '+input.owner:'')+'.');
+  } else if(toolName==='complete_task'){
+    const t=p.tasks.find(t=>t.text.toLowerCase().includes(input.task_name.toLowerCase()));
+    if(t){t.done=input.done;msgs.push('Task "'+t.text+'" marked as '+(input.done?'done':'pending')+'.');}
+    else msgs.push('Could not find a task matching "'+input.task_name+'".');
+  } else if(toolName==='add_risk'){
+    p.risks.push({level:input.level,text:input.text});
+    msgs.push('Risk added ['+input.level+']: "'+input.text+'".');
+  } else if(toolName==='update_progress'){
+    p.progress=Math.min(100,Math.max(0,input.progress));
+    msgs.push('Project progress updated to '+p.progress+'%.');
+  } else if(toolName==='update_status'){
+    p.status=input.status;
+    msgs.push('Project status updated to "'+statusLabel(input.status)+'".');
+  } else if(toolName==='add_team_member'){
+    const load=input.load||50;
+    p.team.push({initials:input.initials.toUpperCase().slice(0,2),name:input.name,load,color:'#f3f0ff'});
+    msgs.push('Team member '+input.name+' added at '+load+'% capacity.');
+  } else if(toolName==='delete_task'){
+    const idx=p.tasks.findIndex(t=>t.text.toLowerCase().includes(input.task_name.toLowerCase()));
+    if(idx>=0){const removed=p.tasks.splice(idx,1)[0];msgs.push('Task "'+removed.text+'" removed.');}
+    else msgs.push('Could not find task matching "'+input.task_name+'".');
+  } else if(toolName==='add_note'){
+    if(!p.notes) p.notes=[];
+    p.notes.push({title:input.title,content:input.content,category:input.category||'update',date:new Date().toLocaleDateString()});
+    msgs.push('Note recorded: "'+input.title+'" ('+( input.category||'update')+').');
+  }
+  return msgs;
+}
+
+function quickAddTask(projId){
+  const p=getProject(parseInt(projId));
+  const r=applyTool(p,'add_task',{
+    text:'Test task — AI engine working',
+    due_date:'5/15',
+    hours:2,
+    owner:'TL',
+    description:'This confirms the local task engine is active'
+  });
+  renderDashboard(p);
+  refreshLiveTasks(p);
+  const wrap=document.getElementById('chat-'+projId);
+  if(wrap){
+    const d=document.createElement('div');
+    d.className='cmsg cmsg-ai';
+    d.textContent='✓ Quick test task added! Check the task list on the right. The engine is working — now try typing your full task.';
+    wrap.appendChild(d);
+    wrap.scrollTop=wrap.scrollHeight;
+  }
+}
+
+async function sendMsg(projId, prefill){
+  const input=document.getElementById('chatIn-'+projId);
+  const btn=document.getElementById('sendBtn-'+projId);
+  const q=(prefill||input.value).trim();
+  if(!q)return;
+  if(!prefill)input.value='';
+  const p=getProject(parseInt(projId));
+  const wrap=document.getElementById('chat-'+projId);
+  if(!wrap)return;
+  addChatMsg(wrap,q,'user');
+  const thinking=addChatMsg(wrap,'Working on it...','ai thinking');
+  if(btn)btn.disabled=true;
+
+  // --- LOCAL INTENT PARSER (instant, zero API needed for all write actions) ---
+  const actionMsgs=[];
+
+  // 1. ADD TASK — "add a new task- NAME, due X, N hours, description: ..."
+  if(/add.{0,25}task|new task|create task/i.test(q)){
+    const taskObj=parseTaskFromText(q);
+    const r=applyTool(p,'add_task',taskObj);
+    actionMsgs.push(...r);
+    const details=[];
+    if(taskObj.due_date) details.push('Due: '+taskObj.due_date);
+    if(taskObj.hours) details.push(taskObj.hours+'h allocated');
+    if(taskObj.description) details.push('Notes: '+taskObj.description.slice(0,80));
+    if(details.length) actionMsgs.push(details.join(' · '));
+  }
+  // 2. MARK TASK DONE — "mark X as done" / "complete X" / "finished X"
+  else if(/\b(mark|complete|finish|finished|done|completed)\b.{0,40}task/i.test(q)||/task.{0,40}\b(done|complete|finished)\b/i.test(q)){
+    const nameMatch=q.match(/(?:task[:\s]+|mark\s+|complete\s+|finish\s+)([^,]+?)(?:\s+as\s+done|\s+done|\s+complete[d]?|,|$)/i);
+    const name=nameMatch?nameMatch[1].trim():q.replace(/mark|complete|finish|task|done|as|with/gi,'').trim();
+    const r=applyTool(p,'complete_task',{task_name:name,done:true});
+    actionMsgs.push(...r);
+  }
+  // 3. UPDATE TASK with note/info — "update the task X that we did Y"
+  else if(/update.{0,15}task|task.{0,15}update/i.test(q)){
+    // Extract task name
+    const tMatch=q.match(/(?:update\s+(?:the\s+)?task\s+)([^,]+?)(?:\s+that\s+|\s+with\s+|,|$)/i);
+    const taskName=tMatch?tMatch[1].trim():'';
+    // Extract any progress %
+    const pct=q.match(/(\d+)\s*%/);
+    if(pct){const r=applyTool(p,'update_progress',{progress:parseInt(pct[1])});actionMsgs.push(...r);}
+    // Extract note after "that" or "with"
+    const noteMatch=q.match(/(?:that\s+we\s+|with\s+)(.+)/i);
+    const noteText=noteMatch?noteMatch[1].trim():'';
+    if(taskName){
+      // Find the task and add a description note
+      const t=p.tasks.find(t=>t.text.toLowerCase().includes(taskName.toLowerCase()));
+      if(t){
+        t.description=(t.description?t.description+' | ':'')+noteText;
+        actionMsgs.push('Task "'+t.text+'" updated'+(noteText?' with note: '+noteText.slice(0,60):'')+'.');
+      } else {
+        actionMsgs.push('Task matching "'+taskName+'" not found. Existing tasks: '+p.tasks.map(t=>'"'+t.text.slice(0,30)+'"').join(', '));
+      }
+    }
+    if(!actionMsgs.length) actionMsgs.push('Could not parse task update. Try: "Update task [name] with [note]"');
+  }
+  // 4. UPDATE PROGRESS — "update progress to X%" / "set progress 70%"
+  else if(/progress.{0,20}\d+\s*%|\d+\s*%.{0,20}progress|set.{0,10}progress/i.test(q)){
+    const pct=q.match(/(\d+)\s*%/);
+    if(pct){const r=applyTool(p,'update_progress',{progress:parseInt(pct[1])});actionMsgs.push(...r);}
+  }
+  // 5. ADD RISK — "add risk: X" / "new risk high: X"
+  else if(/add.{0,15}risk|new risk/i.test(q)){
+    const lvl=/high/i.test(q)?'High':/low/i.test(q)?'Low':'Med';
+    const txt=q.replace(/add\s+(a\s+)?(high|med|medium|low)?\s*risk[:\s-]*/i,'').trim();
+    const r=applyTool(p,'add_risk',{text:txt,level:lvl});actionMsgs.push(...r);
+  }
+  // 6. STAKEHOLDER FEEDBACK / NOTES — "submit stakeholder feedback..." / "note: ..."
+  else if(/submit|stakeholder|feedback|note[:\s]/i.test(q)){
+    const cat=q.match(/stakeholder/i)?'stakeholder':q.match(/feedback/i)?'feedback':'update';
+    // Auto-title from first sentence
+    const title=q.replace(/^(submit|add|record)\s+(a\s+)?/i,'').split(/[.,]/)[0].slice(0,60);
+    const r=applyTool(p,'add_note',{title,content:q,category:cat});
+    actionMsgs.push(...r);
+  }
+  // 7. DELETE/REMOVE TASK
+  else if(/delete.{0,15}task|remove.{0,15}task/i.test(q)){
+    const nameMatch=q.match(/(?:delete|remove)\s+(?:the\s+)?(?:task\s+)?(.+)/i);
+    if(nameMatch){const r=applyTool(p,'delete_task',{task_name:nameMatch[1].trim()});actionMsgs.push(...r);}
+  }
+
+  // If local parser handled it, skip API and just confirm
+  if(actionMsgs.length>0){
+    renderDashboard(p);
+    renderSidebar();
+    refreshLiveTasks(p);
+    thinking.textContent=actionMsgs.join('\n');
+    thinking.classList.remove('thinking');
+    const badge=document.createElement('div');
+    badge.style.cssText='display:flex;align-items:center;gap:8px;align-self:flex-start;margin-top:4px;flex-wrap:wrap';
+    const tick=document.createElement('span');
+    tick.style.cssText='font-size:11px;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:5px 10px';
+    tick.textContent='\u2713 '+actionMsgs.length+' update'+(actionMsgs.length>1?'s':'')+' saved \u2014 check the panel on the right';
+    const jumpBtn=document.createElement('button');
+    jumpBtn.style.cssText='font-size:11px;padding:5px 10px;background:#eeedfe;color:#534AB7;border:1px solid #afa9ec;border-radius:6px;cursor:pointer;font-family:var(--font)';
+    jumpBtn.textContent='View dashboard \u2192';
+    jumpBtn.onclick=jumpToDashboard;
+    badge.appendChild(tick);
+    badge.appendChild(jumpBtn);
+    wrap.appendChild(badge);
+    wrap.scrollTop=wrap.scrollHeight;
+    if(btn)btn.disabled=false;
+    return;
+  }
+
+  // --- FALLBACK: Claude API for questions / analysis ---
+  const sys=`You are an AI project manager for "${p.name}".
+Project state:
+- Status: ${statusLabel(p.status)}, Progress: ${p.progress}%
+- Lead: ${p.lead}
+- Team: ${p.team.map(m=>m.name+' ('+m.load+'%)').join(', ')}
+- Tasks: ${p.tasks.map(t=>(t.done?'[done]':'[todo]')+' '+t.text).join(' | ')||'none'}
+- Risks: ${p.risks.map(r=>r.level+': '+r.text).join(' | ')||'none'}
+Answer questions concisely. Use bullet points for lists.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:800,
+        system:sys,
+        messages:[{role:'user',content:q}]
+      })
+    });
+    const d=await res.json();
+    if(d.error){
+      thinking.textContent='API error: '+d.error.message;
+    } else {
+      const txt=(d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+      thinking.textContent=txt||'No response from AI. Try rephrasing.';
+    }
+    thinking.classList.remove('thinking');
+  }catch(e){
+    thinking.textContent='Connection error: '+e.message;
+    thinking.classList.remove('thinking');
+    console.error(e);
+  }
+  if(btn)btn.disabled=false;
+}
+
+// Parse natural language task descriptions into structured fields
+function parseTaskFromText(q){
+  // Strip leading command words
+  let text=q.replace(/^(add\s+(a\s+)?new\s+task[-:\s]*|add\s+task[-:\s]*|new\s+task[-:\s]*|create\s+task[-:\s]*)/i,'').trim();
+
+  // Extract due date
+  const dueMatch=text.match(/due\s*(?:date\s*)?[:\-]?\s*([\d\/]+|[a-z]+\s+\d+)/i);
+  const due_date=dueMatch?dueMatch[1].trim():'';
+  if(dueMatch)text=text.replace(dueMatch[0],'');
+
+  // Extract hours / capacity
+  const hrsMatch=text.match(/(\d+)\s*(?:hours?|hrs?|h)\b/i);
+  const hours=hrsMatch?parseInt(hrsMatch[1]):null;
+  if(hrsMatch)text=text.replace(hrsMatch[0],'');
+
+  // Extract owner
+  const ownerMatch=text.match(/(?:owner|assigned?\s+to|assign)[:\s]+([A-Za-z]+(?:\s+[A-Za-z]\.?)?)/i);
+  const owner=ownerMatch?ownerMatch[1].trim():'TL';
+  if(ownerMatch)text=text.replace(ownerMatch[0],'');
+
+  // Extract description (after "description:" keyword)
+  const descMatch=text.match(/description[:\s]+(.+)/is);
+  const description=descMatch?descMatch[1].replace(/,\s*(capacity|due|owner).*/i,'').trim():'';
+  if(descMatch)text=text.replace(descMatch[0],'');
+
+  // What's left (after stripping metadata) is the task name
+  // Clean up separators and capacity allocation label
+  text=text.replace(/,?\s*capacity\s*allocation\s*[:\-]?/gi,'')
+            .replace(/,\s*,/g,',')
+            .replace(/^[,\s\-]+|[,\s\-]+$/g,'')
+            .trim();
+
+  // Task name = first segment before first comma or end
+  const taskName=text.split(/,(?!\s*\d)/)[0].trim()||q.substring(0,60);
+
+  return {
+    text: taskName,
+    due_date,
+    hours,
+    owner,
+    description
+  };
+}
+
+function jumpToDashboard(){
+  const tabs=document.querySelectorAll('.htab');
+  tabs.forEach(b=>{b.classList.remove('active');if(b.textContent==='Dashboard')b.classList.add('active');});
+  ['dashboard','assistant','reports','meeting','linkedin'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t==='dashboard'?'block':'none';
+  });
+  currentTab='dashboard';
+}
+
+function addChatMsg(wrap,text,role){
+  const d=document.createElement('div');
+  d.className='cmsg cmsg-'+role.replace(' ','-');
+  d.textContent=text;
+  wrap.appendChild(d);
+  wrap.scrollTop=wrap.scrollHeight;
+  return d;
+}
+
+function buildContext(p){
+  return `You are an AI project manager for the project "${p.name}" (${p.desc}).
+Status: ${statusLabel(p.status)}. Progress: ${p.progress}%.
+Team lead: ${p.lead}. Team: ${p.team.map(m=>m.name+' ('+m.load+'% capacity)').join(', ')}.
+Tasks: ${p.tasks.map(t=>(t.done?'[done] ':'[pending] ')+t.text).join('; ')}.
+Risks: ${p.risks.map(r=>r.level+': '+r.text).join('; ')}.
+Be concise, specific, and actionable. Use bullet points for multiple items.`;}
+
+function renderReports(p){
+  const el=document.getElementById('tab-reports');
+  el.innerHTML=`
+    <div class="card">
+      <div class="card-title">Status report generator — ${p.name}</div>
+      <div class="row-controls">
+        <select id="rtype-${p.id}">
+          <option value="weekly">Weekly status report</option>
+          <option value="sprint">Sprint summary</option>
+          <option value="monthly">Monthly overview</option>
+          <option value="exec">Executive briefing</option>
+          <option value="stakeholder">Stakeholder update</option>
+        </select>
+        <button class="gen-btn" id="rgen-${p.id}" onclick="genReport(${p.id})">Generate report</button>
+      </div>
+      <div id="rout-${p.id}" class="report-output empty">Your AI-generated report will appear here...</div>
+      <button id="rcopy-${p.id}" style="display:none" class="copy-btn" onclick="copyText('rout-${p.id}','rcopy-${p.id}','Copy to clipboard')">Copy to clipboard</button>
+    </div>`;
+}
+
+async function genReport(projId){
+  const p=getProject(projId);
+  const rtype=document.getElementById('rtype-'+projId).value;
+  const out=document.getElementById('rout-'+projId);
+  const btn=document.getElementById('rgen-'+projId);
+  out.classList.remove('empty');
+  out.textContent='Generating...';
+  btn.disabled=true;btn.textContent='Generating...';
+  const types={weekly:'weekly status report',sprint:'sprint summary',monthly:'monthly overview',exec:'executive briefing',stakeholder:'stakeholder update'};
+  const sys=buildContext(p)+'\n\nWrite professional project status reports with: summary, progress, risks, blockers, next steps. Be structured and concise.';
+  const text=await callClaude(sys,`Write a ${types[rtype]} for ${p.name}. Ready to send to stakeholders.`);
+  out.textContent=text;
+  btn.disabled=false;btn.textContent='Generate report';
+  document.getElementById('rcopy-'+projId).style.display='inline-block';
+}
+
+function renderMeeting(p){
+  const el=document.getElementById('tab-meeting');
+  el.innerHTML=`
+    <div class="card">
+      <div class="card-title">Meeting AI — ${p.name}</div>
+      <textarea id="mtin-${p.id}" class="meeting-ta" placeholder="Paste your meeting transcript or notes for ${p.name} here...
+
+Example:
+Sarah: The API spec needs to be done by Friday, Marcus can you own that?
+Marcus: Yes, I'll handle it. Also we need to review the budget — it's looking tight.
+Sarah: Let's schedule that for Thursday. Priya, can you finish the test cases by Wednesday?
+Priya: I'll try but I'm blocked on the staging environment.
+Marcus: I'll sort that out today."></textarea>
+      <button class="gen-btn" id="mtbtn-${p.id}" onclick="extractActions(${p.id})">Extract action items</button>
+      <div id="mtout-${p.id}" style="margin-top:12px"></div>
+    </div>`;
+}
+
+async function extractActions(projId){
+  const input=document.getElementById('mtin-'+projId).value.trim();
+  if(!input){alert('Paste a meeting transcript first.');return;}
+  const btn=document.getElementById('mtbtn-'+projId);
+  const out=document.getElementById('mtout-'+projId);
+  btn.disabled=true;btn.textContent='Extracting...';
+  const sys='You are an AI meeting analyst. Extract action items from meeting transcripts. Return ONLY a JSON array with fields: task, owner (first name or "Team"), deadline, priority ("High","Medium","Low"). Raw JSON only, no markdown fences.';
+  const result=await callClaude(sys,'Extract action items:\n\n'+input);
+  btn.disabled=false;btn.textContent='Extract action items';
+  try{
+    const items=JSON.parse(result.replace(/```json|```/g,'').trim());
+    out.innerHTML=`<div style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">${items.length} action items extracted</div>`;
+    items.forEach((item,i)=>{
+      const pBg=item.priority==='High'?'#fee2e2':item.priority==='Medium'?'#fef9c3':'#f0fdf4';
+      const pCol=item.priority==='High'?'#991b1b':item.priority==='Medium'?'#92400e':'#166534';
+      const d=document.createElement('div');
+      d.className='action-card';
+      d.innerHTML=`<div class="ac-num">${i+1}</div><div class="ac-body"><strong>${item.task}</strong><div class="ac-meta">Owner: <strong>${item.owner}</strong> · Due: ${item.deadline} · <span style="background:${pBg};color:${pCol};padding:1px 7px;border-radius:5px;font-size:10px">${item.priority}</span></div></div>`;
+      out.appendChild(d);
+    });
+  }catch(e){
+    out.innerHTML=`<div class="action-card"><div class="ac-body">${result}</div></div>`;
+  }
+}
+
+function renderLinkedIn(p){
+  const el=document.getElementById('tab-linkedin');
+  el.innerHTML=`
+    <div class="card">
+      <div class="card-title">LinkedIn post generator — ${p.name}</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Choose a preset or write your own custom prompt below</div>
+      <div class="preset-btns">
+        <button class="preset-btn" onclick="fillPrompt(${p.id},'demo')">Product demo reveal</button>
+        <button class="preset-btn" onclick="fillPrompt(${p.id},'insight')">Thought leadership</button>
+        <button class="preset-btn" onclick="fillPrompt(${p.id},'story')">Problem-solution story</button>
+        <button class="preset-btn" onclick="fillPrompt(${p.id},'launch')">Early access launch</button>
+        <button class="preset-btn" onclick="fillPrompt(${p.id},'milestone')">Milestone celebration</button>
+        <button class="preset-btn" onclick="fillPrompt(${p.id},'lesson')">Lesson learned</button>
+      </div>
+      <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:5px">Your prompt — describe the post you want</label>
+      <textarea id="liprompt-${p.id}" class="li-prompt-area" placeholder="e.g. Write a LinkedIn post celebrating that our ${p.name} project just hit 75% completion. Mention the team's hard work, the challenges we overcame, and tease the upcoming launch. Tone: proud but humble."></textarea>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="gen-btn" id="ligen-${p.id}" onclick="genLinkedIn(${p.id})">Generate post</button>
+        <button class="copy-btn" id="licopy-${p.id}" style="display:none;margin-top:0" onclick="copyText('lipostbody-${p.id}','licopy-${p.id}','Copy post')">Copy post</button>
+      </div>
+      <div id="liout-${p.id}" style="display:none">
+        <div class="li-preview">
+          <div class="li-pre-header">
+            <div class="li-av">YN</div>
+            <div><div class="li-uname">Your Name</div><div class="li-utitle">Building AI-powered tools · ${p.name}</div></div>
+          </div>
+          <div style="padding:0 14px 12px">
+            <div class="li-banner">
+              <div class="li-banner-t">${p.name}</div>
+              <div class="li-banner-s">${p.desc} · ${p.progress}% complete</div>
+            </div>
+          </div>
+          <div id="lipostbody-${p.id}" class="li-post-body"></div>
+          <div class="li-actions-row">
+            <span class="li-act">Like</span><span class="li-act">Comment</span><span class="li-act">Repost</span><span class="li-act">Send</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+const PROMPTS={
+  demo:'Write a LinkedIn post revealing a demo of a project management tool. Hook with a relatable problem, show the solution, end with a CTA. Excited but professional tone.',
+  insight:'Write a thought leadership post about AI changing project management. One surprising insight. No pitch. End with an engaging question.',
+  story:'Write a problem-solution story. Start with a painful PM moment, reveal the AI solution. First-person voice.',
+  launch:'Write a post announcing early access. Create urgency. Ask people to comment "PM" to join. Friendly and direct.',
+  milestone:'Write a post celebrating a project milestone. Acknowledge the team, share what made it hard, and tease what\'s next.',
+  lesson:'Write a post sharing one hard lesson learned while managing a complex project. Vulnerable but professional.'
+};
+
+function fillPrompt(projId,type){
+  const p=getProject(projId);
+  const base=PROMPTS[type];
+  document.getElementById('liprompt-'+projId).value=base+` Context: the project is "${p.name}" (${p.desc}), currently ${p.progress}% complete, status: ${statusLabel(p.status)}.`;
+}
+
+async function genLinkedIn(projId){
+  const p=getProject(projId);
+  const prompt=document.getElementById('liprompt-'+projId).value.trim();
+  if(!prompt){alert('Write a prompt first or choose a preset above.');return;}
+  const btn=document.getElementById('ligen-'+projId);
+  btn.disabled=true;btn.textContent='Generating...';
+  const sys=`You are an expert LinkedIn ghostwriter for tech founders and PMs. Write posts that are concise (150-220 words), use short paragraphs, feel human — not corporate. Max 3 relevant hashtags at the end. Project context: ${buildContext(p)}`;
+  const text=await callClaude(sys,prompt);
+  document.getElementById('lipostbody-'+projId).textContent=text;
+  document.getElementById('liout-'+projId).style.display='block';
+  document.getElementById('licopy-'+projId).style.display='inline-block';
+  btn.disabled=false;btn.textContent='Generate post';
+}
+
+async function callClaude(sys,msg){
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,messages:[{role:'user',content:msg}]})
+    });
+    const data=await res.json();
+    return data.content?.map(b=>b.text||'').join('')||'No response.';
+  }catch(e){return 'Error connecting to AI. Please try again.';}
+}
+
+function copyText(outId, btnId, label){
+  const text=document.getElementById(outId).textContent;
+  navigator.clipboard.writeText(text);
+  const btn=document.getElementById(btnId);
+  btn.textContent='Copied!';
+  setTimeout(()=>btn.textContent=label,2000);
+}
+
+function openAddModal(){document.getElementById('addModal').classList.add('open');}
+function closeAddModal(){document.getElementById('addModal').classList.remove('open');}
+
+function addProject(){
+  const name=document.getElementById('newProjName').value.trim();
+  if(!name){alert('Enter a project name.');return;}
+  const newId=Math.max(...projects.map(p=>p.id))+1;
+  const color=COLORS[newId%COLORS.length];
+  projects.push({
+    id:newId,
+    name,
+    desc:document.getElementById('newProjDesc').value||'No description',
+    status:document.getElementById('newProjStatus').value,
+    progress:parseInt(document.getElementById('newProjProgress').value)||0,
+    lead:document.getElementById('newProjLead').value||'Unassigned',
+    color,
+    tasks:[{id:'nt1',text:'Set up project structure',done:false,owner:'TL'},{id:'nt2',text:'Define milestones',done:false,owner:'TL'}],
+    risks:[{level:'Low',text:'Initial setup complexity'}],
+    team:[{initials:(document.getElementById('newProjLead').value||'TL').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2),name:document.getElementById('newProjLead').value||'Team Lead',load:50,color:'#f3f0ff'}]
+  });
+  closeAddModal();
+  document.getElementById('newProjName').value='';
+  document.getElementById('newProjDesc').value='';
+  document.getElementById('newProjProgress').value='0';
+  document.getElementById('newProjLead').value='';
+  renderSidebar();
+  renderOverview();
+  openProject(newId);
+}
+
+document.getElementById('addModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeAddModal();});
+
+renderSidebar();
+renderOverview();
+</script>
+</body>
+</html>
