@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ProjectAI v4 — AI Project Management</title>
+<meta property="og:title" content="ProjectAI — AI-Powered Project Management"/>
+<meta property="og:description" content="Manage projects, tasks, risks and generate AI status reports. Built with Claude AI."/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#f7f6f2;--surface:#fff;--surface2:#f0efe9;--border:rgba(0,0,0,.08);--border-md:rgba(0,0,0,.13);--text:#1a1917;--text2:#6b6960;--text3:#9b9a94;--accent:#5b4fcf;--accent-light:#eeecfc;--accent-mid:#a09be0;--radius:10px;--radius-lg:14px;--radius-xl:18px;--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;--sidebar-w:260px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;font-size:14px}
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;flex-shrink:0}
+.sidebar-header{padding:18px 18px 12px;border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:9px;margin-bottom:3px}
+.logo-mark{width:30px;height:30px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.logo-mark svg{width:16px;height:16px;stroke:white;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.logo-name{font-size:15px;font-weight:500;letter-spacing:-.3px}
+.logo-tag{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.sidebar-section{padding:12px 12px 5px;font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+.proj-list{flex:1;overflow-y:auto;padding:0 8px}
+.proj-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius);cursor:pointer;margin-bottom:2px;transition:all .15s;border:1px solid transparent}
+.proj-item:hover{background:var(--surface2)}
+.proj-item.active{background:var(--accent-light);border-color:rgba(91,79,207,.15)}
+.proj-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.proj-item-name{flex:1;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.proj-item.active .proj-item-name{color:var(--accent);font-weight:500}
+.proj-badge{font-size:10px;padding:2px 6px;border-radius:6px;background:var(--surface2);color:var(--text3)}
+.proj-item.active .proj-badge{background:rgba(91,79,207,.12);color:var(--accent)}
+.add-proj-btn{margin:8px;padding:9px 14px;border-radius:var(--radius);border:1.5px dashed var(--border-md);background:transparent;color:var(--text2);font-size:12.5px;font-family:var(--font);cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .15s;width:calc(100% - 16px)}
+.add-proj-btn:hover{background:var(--surface2);border-color:var(--accent-mid);color:var(--accent)}
+.sidebar-footer{padding:10px 12px;border-top:1px solid var(--border)}
+.overview-btn{width:100%;padding:8px 12px;border-radius:var(--radius);border:1px solid var(--border-md);background:transparent;color:var(--text2);font-size:12.5px;font-family:var(--font);cursor:pointer;text-align:left;transition:all .15s}
+.overview-btn:hover,.overview-btn.active{background:var(--accent-light);color:var(--accent);border-color:rgba(91,79,207,.2)}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.main-header{padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.main-title{font-size:16px;font-weight:500;letter-spacing:-.2px}
+.main-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.header-tabs{display:flex;gap:3px;background:var(--surface2);padding:3px;border-radius:var(--radius);flex-wrap:wrap}
+.htab{font-size:12px;padding:5px 12px;border-radius:7px;border:none;background:transparent;color:var(--text2);cursor:pointer;font-family:var(--font);transition:all .15s;white-space:nowrap}
+.htab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.main-body{flex:1;overflow-y:auto;padding:20px 24px}
+/* CAPACITY BAR */
+.capacity-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 18px;margin-bottom:14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.cap-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.cap-track{flex:1;height:8px;background:var(--surface2);border-radius:4px;min-width:120px}
+.cap-fill{height:100%;border-radius:4px;transition:width .5s ease}
+.cap-stat{font-size:13px;font-weight:500;white-space:nowrap}
+.cap-members{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--text2)}
+.cap-member{display:flex;align-items:center;gap:5px}
+.cap-av{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:500}
+/* MODALS */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-xl);padding:24px;width:480px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal h3{font-size:16px;font-weight:500;margin-bottom:14px}
+.modal label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px;margin-top:10px}
+.modal input,.modal textarea,.modal select{width:100%;padding:8px 11px;border:1px solid var(--border-md);border-radius:var(--radius);font-family:var(--font);font-size:13px;background:var(--surface2);color:var(--text);outline:none}
+.modal textarea{min-height:70px;resize:vertical;line-height:1.5}
+.modal input:focus,.modal textarea:focus{border-color:var(--accent)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.btn-cancel{padding:8px 16px;border-radius:var(--radius);border:1px solid var(--border-md);background:transparent;color:var(--text2);font-family:var(--font);font-size:13px;cursor:pointer}
+.btn-primary{padding:8px 18px;border-radius:var(--radius);border:none;background:var(--accent);color:white;font-family:var(--font);font-size:13px;cursor:pointer;font-weight:500}
+.btn-danger{padding:8px 14px;border-radius:var(--radius);border:none;background:#fee2e2;color:#991b1b;font-family:var(--font);font-size:13px;cursor:pointer}
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:12px}
+.card-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.card-title{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+.ellipsis-btn{width:26px;height:26px;border-radius:6px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:16px;line-height:1;transition:all .15s;position:relative}
+.ellipsis-btn:hover{background:var(--surface2);color:var(--text)}
+.dropdown{display:none;position:absolute;right:0;top:100%;background:var(--surface);border:1px solid var(--border-md);border-radius:var(--radius);box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:50;min-width:160px;overflow:hidden}
+.dropdown.open{display:block}
+.dd-item{padding:9px 14px;font-size:13px;color:var(--text);cursor:pointer;transition:background .1s;white-space:nowrap}
+.dd-item:hover{background:var(--surface2)}
+.dd-item.danger{color:#dc2626}
+/* TASKS */
+.task-row{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;border-radius:6px;margin:0 -6px;padding-left:6px;padding-right:6px}
+.task-row:last-child{border-bottom:none}
+.task-row:hover{background:var(--surface2)}
+.tchk{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--border-md);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .15s}
+.tchk.done{background:var(--accent);border-color:var(--accent)}
+.task-main{flex:1;min-width:0}
+.task-name-text{font-size:12.5px;font-weight:500;margin-bottom:2px}
+.task-name-text.done{text-decoration:line-through;color:var(--text3)}
+.task-chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px}
+.chip-sm{font-size:10px;padding:1px 6px;border-radius:4px;font-weight:500}
+.task-av{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:500;flex-shrink:0}
+/* RISK ROWS */
+.risk-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12.5px}
+.risk-row:last-child{border-bottom:none}
+.rpill{font-size:10px;padding:2px 7px;border-radius:6px;font-weight:500;white-space:nowrap}
+/* TEAM ROWS */
+.team-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)}
+.team-row:last-child{border-bottom:none}
+.team-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500;flex-shrink:0}
+.wbar{flex:1;height:5px;border-radius:3px;background:var(--surface2)}
+.wfill{height:100%;border-radius:3px;transition:width .4s}
+.on-leave{font-size:10px;padding:1px 6px;border-radius:4px;background:#fef9c3;color:#92400e;font-weight:500}
+/* INSIGHTS */
+.insight-item{display:flex;gap:8px;align-items:flex-start;padding:8px;border-radius:var(--radius);margin-bottom:6px}
+.insight-item:last-child{margin-bottom:0}
+.ii-icon{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.ii-text{font-size:12.5px;line-height:1.4}
+.ii-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.ins-w{background:#fff7ed}.ins-w .ii-icon{background:#fed7aa;color:#92400e}
+.ins-g{background:#f0fdf4}.ins-g .ii-icon{background:#bbf7d0;color:#166534}
+.ins-b{background:#eff6ff}.ins-b .ii-icon{background:#bfdbfe;color:#1e40af}
+/* CHAT */
+.chat-messages{display:flex;flex-direction:column;gap:10px;min-height:180px;margin-bottom:12px}
+.cmsg{max-width:82%;padding:10px 13px;border-radius:12px;font-size:13px;line-height:1.5}
+.cmsg-user{align-self:flex-end;background:var(--accent);color:white;border-radius:12px 12px 3px 12px}
+.cmsg-ai{align-self:flex-start;background:var(--surface2);color:var(--text);border-radius:12px 12px 12px 3px}
+.cmsg-ai.thinking{color:var(--text3);font-style:italic}
+.chat-input-row{display:flex;gap:8px}
+.chat-input-row input{flex:1;padding:9px 13px;border:1px solid var(--border-md);border-radius:var(--radius);font-family:var(--font);font-size:13px;background:var(--surface2);color:var(--text);outline:none}
+.chat-input-row input:focus{border-color:var(--accent)}
+.send-btn,.gen-btn{padding:9px 16px;background:var(--accent);color:white;border:none;border-radius:var(--radius);font-family:var(--font);font-size:13px;cursor:pointer;font-weight:500}
+.send-btn:disabled,.gen-btn:disabled{opacity:.5;cursor:not-allowed}
+.quick-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{font-size:11.5px;padding:5px 11px;border:1px solid var(--border-md);border-radius:20px;background:var(--surface2);color:var(--text2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--accent-mid);color:var(--accent)}
+/* GRID */
+.metrics-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.metric-card{background:var(--surface2);border-radius:var(--radius);padding:12px 14px}
+.mc-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.mc-val{font-size:20px;font-weight:500}
+.mc-sub{font-size:11px;margin-top:2px;color:var(--text3)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+/* OVERVIEW */
+.big-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.bm{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px}
+.bm.clickable{cursor:pointer;transition:all .18s}
+.bm.clickable:hover{border-color:var(--accent-mid);transform:translateY(-1px)}
+.bm.active-filter{border-color:var(--accent);background:var(--accent-light)}
+.filter-label{font-size:10px;color:var(--accent);font-weight:500;margin-top:4px;display:none}
+.bm.active-filter .filter-label{display:block}
+.overview-filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:14px;min-height:28px}
+.filter-pill{font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid var(--border-md);background:var(--surface2);color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
+.filter-pill:hover{border-color:var(--accent-mid);color:var(--accent)}
+.filter-pill .pill-x{font-size:14px;line-height:1;color:var(--text3)}
+.no-results{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px;grid-column:1/-1}
+.bm-label{font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.bm-val{font-size:22px;font-weight:500}
+.bm-sub{font-size:11px;margin-top:3px}
+.overview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.ov-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;cursor:pointer;transition:all .2s}
+.ov-card:hover{border-color:var(--accent-mid);transform:translateY(-1px)}
+.ov-card-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.ov-prog-bar{height:4px;background:var(--surface2);border-radius:2px;margin-bottom:8px}
+.ov-prog-fill{height:100%;border-radius:2px}
+.ov-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--text3)}
+/* REPORTS */
+.report-output{background:var(--surface2);border-radius:var(--radius);padding:14px;font-size:13px;line-height:1.7;min-height:80px;white-space:pre-wrap;color:var(--text);margin-top:12px}
+.report-output.empty{color:var(--text3);font-style:italic}
+.row-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row-controls select,.modal select{padding:7px 10px;border:1px solid var(--border-md);border-radius:var(--radius);font-family:var(--font);font-size:12.5px;background:var(--surface2);color:var(--text);outline:none}
+.copy-btn{padding:7px 14px;background:var(--surface2);color:var(--text2);border:1px solid var(--border-md);border-radius:var(--radius);font-family:var(--font);font-size:12px;cursor:pointer;margin-top:8px}
+/* MEETING */
+.meeting-ta,.li-prompt-area{width:100%;min-height:90px;padding:10px;border:1px solid var(--border-md);border-radius:var(--radius);font-family:var(--font);font-size:12.5px;background:var(--surface2);color:var(--text);resize:vertical;line-height:1.5;outline:none;margin-bottom:10px}
+.meeting-ta:focus,.li-prompt-area:focus{border-color:var(--accent)}
+.action-card{display:flex;gap:8px;padding:9px;background:var(--surface2);border-radius:var(--radius);margin-bottom:6px}
+.ac-num{width:20px;height:20px;border-radius:50%;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0}
+/* LINKEDIN */
+.li-preview{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-top:14px}
+.preset-btns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.preset-btn{font-size:11.5px;padding:5px 11px;border:1px solid var(--border-md);border-radius:20px;background:var(--surface2);color:var(--text2);cursor:pointer;transition:all .15s}
+.preset-btn:hover{background:var(--accent-light);color:var(--accent);border-color:var(--accent-mid)}
+.section-view{display:none}
+.section-view.active{display:block}
+@media(max-width:700px){.three-col,.two-col,.metrics-row,.big-metrics,.overview-grid{grid-template-columns:1fr}.sidebar{display:none}}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div style="background:#5b4fcf;color:white;font-size:10px;text-align:center;padding:5px;font-family:monospace;letter-spacing:.05em;font-weight:bold">
+  ProjectAI v4 — LOCAL ENGINE ACTIVE
+</div>
+<div class="sidebar-header">
+    <div class="logo">
+      <div class="logo-mark"><svg viewBox="0 0 20 20"><polyline points="2,14 7,9 11,13 18,6"/><circle cx="18" cy="6" r="2" fill="white" stroke="none"/></svg></div>
+      <div class="logo-name">ProjectAI</div>
+    </div>
+    <div class="logo-tag">Intelligent PM platform</div>
+  </div>
+  <div class="sidebar-section">Workspace</div>
+  <div style="padding:0 8px 4px"><button class="overview-btn active" id="overviewBtn" onclick="showOverview()">All projects overview</button></div>
+  <div class="sidebar-section">Projects</div>
+  <div class="proj-list" id="projList"></div>
+  <button class="add-proj-btn" onclick="openModal('addProjModal')">
+    <svg viewBox="0 0 16 16" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round"><line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/></svg>
+    Add new project
+  </button>
+  <div class="sidebar-footer"><div style="font-size:10px;color:var(--text3);text-align:center;font-family:var(--mono)">Powered by Claude AI</div></div>
+</aside>
+
+<main class="main">
+  <div class="main-header">
+    <div><div class="main-title" id="mainTitle">All projects</div><div class="main-sub" id="mainSub">Workspace overview</div></div>
+    <div class="header-tabs" id="headerTabs" style="display:none">
+      <button class="htab active" onclick="switchTab('dashboard',this)">Dashboard</button>
+      <button class="htab" onclick="switchTab('assistant',this)">AI assistant</button>
+      <button class="htab" onclick="switchTab('reports',this)">Status reports</button>
+      <button class="htab" onclick="switchTab('meeting',this)">Meeting AI</button>
+      <button class="htab" onclick="switchTab('linkedin',this)">LinkedIn post</button>
+    </div>
+  </div>
+  <div class="main-body">
+    <div id="view-overview" class="section-view active">
+      <div class="big-metrics" id="overviewMetrics"></div>
+      <div class="overview-filter-bar" id="filterBar"></div>
+      <div class="overview-grid" id="overviewGrid"></div>
+    </div>
+    <div id="view-project" class="section-view">
+      <div id="tab-dashboard"></div>
+      <div id="tab-assistant" style="display:none"></div>
+      <div id="tab-reports" style="display:none"></div>
+      <div id="tab-meeting" style="display:none"></div>
+      <div id="tab-linkedin" style="display:none"></div>
+    </div>
+  </div>
+</main>
+
+<!-- ADD PROJECT MODAL -->
+<div class="modal-overlay" id="addProjModal">
+  <div class="modal">
+    <h3>Add new project</h3>
+    <label>Project name</label><input id="npName" placeholder="e.g. Fashion App"/>
+    <label>Description</label><input id="npDesc" placeholder="Brief description"/>
+    <label>Status</label>
+    <select id="npStatus"><option value="on-track">On track</option><option value="at-risk">At risk</option><option value="behind">Behind schedule</option><option value="completed">Completed</option></select>
+    <label>Progress (%)</label><input id="npProgress" type="number" min="0" max="100" value="0"/>
+    <label>Team lead</label><input id="npLead" placeholder="e.g. Tanvi S."/>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('addProjModal')">Cancel</button><button class="btn-primary" onclick="addProject()">Add project</button></div>
+  </div>
+</div>
+
+<!-- TASK DETAIL MODAL (pop-out) -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal" style="width:540px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 id="tmTitle" style="margin:0"></h3>
+      <button class="btn-danger" id="tmDeleteBtn">Delete task</button>
+    </div>
+    <label>Task name</label><input id="tmName"/>
+    <label>Owner initials</label><input id="tmOwner" style="width:80px"/>
+    <label>Due date</label><input id="tmDue" placeholder="e.g. 5/15"/>
+    <label>Capacity (hours)</label><input id="tmHours" type="number" min="0"/>
+    <label>Status</label>
+    <select id="tmStatus"><option value="pending">Pending</option><option value="done">Done</option></select>
+    <label>Story points</label>
+    <input id="tmStoryPoints" type="number" min="0" max="100" placeholder="e.g. 3" style="width:100px"/>
+    <label>User story</label>
+    <textarea id="tmStory" placeholder="As a [user] I want to [action] so that [benefit]..."></textarea>
+    <label>Description / Notes</label>
+    <textarea id="tmDesc" placeholder="Task details, acceptance criteria, links..."></textarea>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('taskModal')">Cancel</button><button class="btn-primary" onclick="saveTask()">Save changes</button></div>
+  </div>
+</div>
+
+<!-- RISK EDIT MODAL -->
+<div class="modal-overlay" id="riskModal">
+  <div class="modal" style="width:420px">
+    <h3 id="rmTitle">Edit risk</h3>
+    <label>Risk description</label><input id="rmText"/>
+    <label>Severity</label>
+    <select id="rmLevel"><option value="High">High</option><option value="Med">Medium</option><option value="Low">Low</option></select>
+    <div class="modal-actions">
+      <button class="btn-danger" id="rmDeleteBtn">Delete</button>
+      <button class="btn-cancel" onclick="closeModal('riskModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveRisk()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEAM MEMBER MODAL -->
+<div class="modal-overlay" id="memberModal">
+  <div class="modal" style="width:440px">
+    <h3 id="mmTitle">Team member</h3>
+    <label>Full name</label><input id="mmName" placeholder="e.g. Sarah L."/>
+    <label>Initials (2 letters)</label><input id="mmInitials" placeholder="SL" maxlength="2" style="width:80px"/>
+    <label>Role / Title</label><input id="mmRole" placeholder="e.g. UX Designer"/>
+    <label>Workload capacity (%)</label><input id="mmLoad" type="number" min="0" max="100" value="70"/>
+    <label>Hours allocated</label><input id="mmHours" type="number" min="0" value="40"/>
+    <label>On leave?</label>
+    <select id="mmLeave"><option value="no">No — active</option><option value="yes">Yes — on leave</option></select>
+    <label>Leave dates (if applicable)</label><input id="mmLeaveDates" placeholder="e.g. May 10–20"/>
+    <label>Notes</label><textarea id="mmNotes" placeholder="Any additional notes about this team member..."></textarea>
+    <div class="modal-actions">
+      <button class="btn-danger" id="mmDeleteBtn">Remove</button>
+      <button class="btn-cancel" onclick="closeModal('memberModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveMember()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS=['#5b4fcf','#16a374','#d97706','#2563eb','#dc2626','#7c3aed','#0891b2','#be185d'];
+let projects=[
+  {id:1,name:'Platform redesign',desc:'Full UI/UX overhaul',status:'on-track',progress:78,lead:'Sarah L.',color:'#5b4fcf',notes:[],
+   tasks:[
+     {id:'t1',text:'Design review — homepage',done:true,owner:'SL',due_date:'4/30',hours:8,story:'As a PM I want a reviewed homepage so stakeholders can approve the design.',description:'Check all breakpoints, dark mode, and accessibility.'},
+     {id:'t2',text:'Finalize component library',done:false,owner:'MR',due_date:'5/10',hours:12,story:'',description:'Buttons, inputs, cards — ensure design tokens are consistent.'},
+     {id:'t3',text:'Responsive layout QA',done:false,owner:'AK',due_date:'5/15',hours:6,story:'',description:''},
+     {id:'t4',text:'Stakeholder sign-off',done:true,owner:'JT',due_date:'4/28',hours:2,story:'',description:''}
+   ],
+   risks:[{id:'r1',level:'Med',text:'Scope creep in sidebar nav'},{id:'r2',level:'Low',text:'Font license renewal'}],
+   team:[
+     {id:'m1',initials:'SL',name:'Sarah L.',role:'UX Lead',load:88,hours:35,color:'#ede9fe',onLeave:false,leaveDates:'',notes:''},
+     {id:'m2',initials:'MR',name:'Marcus R.',role:'Frontend Dev',load:65,hours:26,color:'#dcfce7',onLeave:false,leaveDates:'',notes:''},
+     {id:'m3',initials:'AK',name:'Aisha K.',role:'QA Engineer',load:50,hours:20,color:'#fef9c3',onLeave:false,leaveDates:'',notes:''}
+   ]},
+  {id:2,name:'API migration',desc:'Move to REST v3 endpoints',status:'at-risk',progress:45,lead:'Marcus R.',color:'#d97706',notes:[],
+   tasks:[
+     {id:'t5',text:'Audit legacy endpoints',done:true,owner:'MR',due_date:'4/20',hours:10,story:'',description:''},
+     {id:'t6',text:'Write migration scripts',done:false,owner:'PW',due_date:'5/20',hours:20,story:'',description:''},
+     {id:'t7',text:'Integration tests',done:false,owner:'JT',due_date:'5/25',hours:15,story:'',description:''},
+     {id:'t8',text:'Rollback plan doc',done:false,owner:'MR',due_date:'5/15',hours:4,story:'',description:''}
+   ],
+   risks:[{id:'r3',level:'High',text:'Sprint scope 23% over estimate'},{id:'r4',level:'High',text:'Vendor API rate limits'},{id:'r5',level:'Med',text:'No staging environment yet'}],
+   team:[
+     {id:'m4',initials:'MR',name:'Marcus R.',role:'Tech Lead',load:90,hours:36,color:'#fef9c3',onLeave:false,leaveDates:'',notes:''},
+     {id:'m5',initials:'PW',name:'Priya W.',role:'Backend Dev',load:72,hours:29,color:'#fce7f3',onLeave:false,leaveDates:'',notes:''},
+     {id:'m6',initials:'JT',name:'James T.',role:'QA',load:60,hours:24,color:'#dbeafe',onLeave:false,leaveDates:'',notes:''}
+   ]},
+  {id:3,name:'Mobile app v3',desc:'iOS & Android release',status:'behind',progress:62,lead:'Aisha K.',color:'#dc2626',notes:[],
+   tasks:[
+     {id:'t9',text:'Push notification setup',done:true,owner:'AK',due_date:'4/25',hours:8,story:'',description:''},
+     {id:'t10',text:'Offline mode support',done:false,owner:'SL',due_date:'5/18',hours:20,story:'As a user I want the app to work offline so I can use it without internet.',description:''},
+     {id:'t11',text:'App store assets',done:false,owner:'PW',due_date:'5/20',hours:6,story:'',description:'Screenshots, icon, description for App Store and Play Store.'},
+     {id:'t12',text:'Beta testing round 2',done:false,owner:'AK',due_date:'5/28',hours:12,story:'',description:''}
+   ],
+   risks:[{id:'r6',level:'High',text:'6 days behind schedule'},{id:'r7',level:'Med',text:'Logo assets pending'},{id:'r8',level:'Low',text:'App store review time'}],
+   team:[
+     {id:'m7',initials:'AK',name:'Aisha K.',role:'Mobile Lead',load:95,hours:38,color:'#fee2e2',onLeave:false,leaveDates:'',notes:''},
+     {id:'m8',initials:'SL',name:'Sarah L.',role:'UX',load:70,hours:28,color:'#ede9fe',onLeave:false,leaveDates:'',notes:''},
+     {id:'m9',initials:'PW',name:'Priya W.',role:'iOS Dev',load:45,hours:18,color:'#fce7f3',onLeave:false,leaveDates:'',notes:''}
+   ]},
+  {id:4,name:'Data pipeline',desc:'ETL + real-time analytics',status:'on-track',progress:91,lead:'James T.',color:'#2563eb',notes:[],
+   tasks:[
+     {id:'t13',text:'Kafka cluster setup',done:true,owner:'JT',due_date:'4/15',hours:16,story:'',description:''},
+     {id:'t14',text:'Dashboard connectors',done:true,owner:'MR',due_date:'4/22',hours:10,story:'',description:''},
+     {id:'t15',text:'Load testing',done:false,owner:'JT',due_date:'5/5',hours:8,story:'',description:'Test with 10x expected load.'},
+     {id:'t16',text:'Documentation',done:false,owner:'AK',due_date:'5/8',hours:5,story:'',description:''}
+   ],
+   risks:[{id:'r9',level:'Low',text:'Cloud cost monitoring'},{id:'r10',level:'Low',text:'API deprecation in Q4'}],
+   team:[
+     {id:'m10',initials:'JT',name:'James T.',role:'Data Engineer',load:80,hours:32,color:'#dbeafe',onLeave:false,leaveDates:'',notes:''},
+     {id:'m11',initials:'MR',name:'Marcus R.',role:'Backend',load:55,hours:22,color:'#dcfce7',onLeave:false,leaveDates:'',notes:''}
+   ]}
+];
+
+let currentProjectId=null,currentTab='dashboard',activeFilter=null;
+const chatHistory={};     // {projId: [{role,text}]}
+const convContext={};    // {projId: {lastTaskId, lastRiskId, lastMemberId, lastAction}}
+
+function getCtx(projId){
+  if(!convContext[projId]) convContext[projId]={lastTaskId:null,lastRiskId:null,lastMemberId:null,lastAction:null,pendingAction:null,pendingData:null};
+  return convContext[projId];
+}
+function setCtx(projId,updates){
+  const ctx=getCtx(projId);
+  Object.assign(ctx,updates);
+}
+let editingTaskId=null,editingRiskId=null,editingMemberId=null;
+
+function uid(){return 'id_'+Date.now()+'_'+Math.random().toString(36).slice(2,6)}
+function getProject(id){return projects.find(p=>p.id===id)}
+function statusColor(s){return s==='on-track'?'#16a374':s==='at-risk'?'#d97706':s==='behind'?'#dc2626':'#6b7280'}
+function statusBg(s){return s==='on-track'?'#f0fdf4':s==='at-risk'?'#fffbeb':s==='behind'?'#fef2f2':'#f9fafb'}
+function statusLabel(s){return s==='on-track'?'On track':s==='at-risk'?'At risk':s==='behind'?'Behind':'Completed'}
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+// Close dropdown when clicking outside
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.ellipsis-btn')) document.querySelectorAll('.dropdown.open').forEach(d=>d.classList.remove('open'));
+});
+function toggleDD(id,e){e.stopPropagation();const d=document.getElementById(id);document.querySelectorAll('.dropdown.open').forEach(x=>{if(x!==d)x.classList.remove('open')});d.classList.toggle('open')}
+
+// ── SIDEBAR ──────────────────────────────────────────
+function renderSidebar(){
+  const list=document.getElementById('projList');
+  list.innerHTML='';
+  projects.forEach(p=>{
+    const el=document.createElement('div');
+    el.className='proj-item'+(currentProjectId===p.id?' active':'');
+    el.onclick=()=>openProject(p.id);
+    el.innerHTML=`<div class="proj-dot" style="background:${p.color}"></div><span class="proj-item-name">${p.name}</span><span class="proj-badge">${p.progress}%</span>`;
+    list.appendChild(el);
+  });
+}
+
+// ── OVERVIEW ─────────────────────────────────────────
+function showOverview(){
+  currentProjectId=null;
+  document.getElementById('view-overview').classList.add('active');
+  document.getElementById('view-project').classList.remove('active');
+  document.getElementById('headerTabs').style.display='none';
+  document.getElementById('mainTitle').textContent='All projects';
+  document.getElementById('mainSub').textContent='Workspace overview';
+  document.getElementById('overviewBtn').classList.add('active');
+  renderSidebar();renderOverview();
+}
+function setFilter(filter){
+  activeFilter = activeFilter===filter ? null : filter;
+  renderOverview();
+}
+
+function renderOverview(){
+  const total=projects.length;
+  const onTrack=projects.filter(p=>p.status==='on-track'||p.status==='completed').length;
+  const atRisk=projects.filter(p=>p.status==='at-risk'||p.status==='behind').length;
+  const avgProg=total?Math.round(projects.reduce((s,p)=>s+p.progress,0)/total):0;
+
+  // Metric cards — clickable with active state
+  document.getElementById('overviewMetrics').innerHTML=`
+    <div class="bm clickable ${activeFilter===null?'':''}${activeFilter==='all'?'active-filter':''}" onclick="setFilter('all')">
+      <div class="bm-label">Total projects</div><div class="bm-val">${total}</div>
+      <div class="filter-label">Showing all</div>
+    </div>
+    <div class="bm clickable ${activeFilter==='on-track'?'active-filter':''}" onclick="setFilter('on-track')">
+      <div class="bm-label">On track</div><div class="bm-val" style="color:#16a374">${onTrack}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">Click to filter</div>
+      <div class="filter-label">Filtered ✓</div>
+    </div>
+    <div class="bm clickable ${activeFilter==='at-risk'?'active-filter':''}" onclick="setFilter('at-risk')">
+      <div class="bm-label">Need attention</div><div class="bm-val" style="color:#d97706">${atRisk}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">Click to filter</div>
+      <div class="filter-label">Filtered ✓</div>
+    </div>
+    <div class="bm clickable ${activeFilter==='completed'?'active-filter':''}" onclick="setFilter('completed')">
+      <div class="bm-label">Avg progress</div><div class="bm-val">${avgProg}%</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">Across all projects</div>
+    </div>`;
+
+  // Filter bar pill
+  const filterBar=document.getElementById('filterBar');
+  if(activeFilter && activeFilter!=='all'){
+    const labels={'on-track':'On track','at-risk':'Needs attention','completed':'Completed'};
+    filterBar.innerHTML=`<span style="font-size:12px;color:var(--text3)">Filtering by:</span>
+      <div class="filter-pill">
+        <span>${labels[activeFilter]||activeFilter}</span>
+        <span class="pill-x" onclick="setFilter(null)">×</span>
+      </div>
+      <span style="font-size:12px;color:var(--text3)">${getFiltered().length} project${getFiltered().length!==1?'s':''}</span>`;
+  } else {
+    filterBar.innerHTML='';
+  }
+
+  // Grid
+  const grid=document.getElementById('overviewGrid');
+  grid.innerHTML='';
+  const filtered=getFiltered();
+  if(filtered.length===0){
+    grid.innerHTML='<div class="no-results">No projects match this filter.</div>';
+    return;
+  }
+  filtered.forEach(p=>{
+    const el=document.createElement('div');
+    el.className='ov-card';
+    el.onclick=()=>openProject(p.id);
+    el.innerHTML=`
+      <div class="ov-card-header">
+        <div class="proj-dot" style="background:${p.color};width:10px;height:10px"></div>
+        <span style="flex:1;font-size:13px;font-weight:500">${p.name}</span>
+        <span style="font-size:10px;padding:2px 8px;border-radius:6px;font-weight:500;background:${statusBg(p.status)};color:${statusColor(p.status)}">${statusLabel(p.status)}</span>
+      </div>
+      <div class="ov-prog-bar"><div class="ov-prog-fill" style="width:${p.progress}%;background:${p.color}"></div></div>
+      <div class="ov-meta"><span>Lead: ${p.lead}</span><span>${p.progress}%</span></div>`;
+    grid.appendChild(el);
+  });
+}
+
+function getFiltered(){
+  if(!activeFilter || activeFilter==='all') return projects;
+  if(activeFilter==='on-track') return projects.filter(p=>p.status==='on-track'||p.status==='completed');
+  if(activeFilter==='at-risk') return projects.filter(p=>p.status==='at-risk'||p.status==='behind');
+  return projects.filter(p=>p.status===activeFilter);
+}
+
+function openProject(id){
+  currentProjectId=id;const p=getProject(id);
+  document.getElementById('view-overview').classList.remove('active');
+  document.getElementById('view-project').classList.add('active');
+  document.getElementById('headerTabs').style.display='flex';
+  document.getElementById('mainTitle').textContent=p.name;
+  document.getElementById('mainSub').textContent=p.desc+' · '+statusLabel(p.status);
+  document.getElementById('overviewBtn').classList.remove('active');
+  renderSidebar();switchTab('dashboard',document.querySelector('.htab'));
+}
+
+function switchTab(tab,btn){
+  currentTab=tab;
+  ['dashboard','assistant','reports','meeting','linkedin'].forEach(t=>document.getElementById('tab-'+t).style.display=t===tab?'block':'none');
+  document.querySelectorAll('.htab').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  const p=getProject(currentProjectId);if(!p)return;
+  if(tab==='dashboard')renderDashboard(p);
+  else if(tab==='assistant')renderAssistant(p);
+  else if(tab==='reports')renderReports(p);
+  else if(tab==='meeting')renderMeeting(p);
+  else if(tab==='linkedin')renderLinkedIn(p);
+}
+
+// ── CAPACITY BAR ─────────────────────────────────────
+function renderCapacityBar(p){
+  const active=p.team.filter(m=>!m.onLeave);
+  const onLeave=p.team.filter(m=>m.onLeave);
+  const totalHrs=p.team.reduce((s,m)=>s+(m.hours||0),0);
+  const activeHrs=active.reduce((s,m)=>s+(m.hours||0),0);
+  const avgLoad=active.length?Math.round(active.reduce((s,m)=>s+m.load,0)/active.length):0;
+  const color=avgLoad>85?'#dc2626':avgLoad>70?'#d97706':'#16a374';
+  return `<div class="capacity-bar">
+    <span class="cap-label">Team capacity</span>
+    <div class="cap-track"><div class="cap-fill" style="width:${avgLoad}%;background:${color}"></div></div>
+    <span class="cap-stat" style="color:${color}">${avgLoad}% avg load</span>
+    <span style="font-size:12px;color:var(--text3)">${activeHrs}h allocated · ${active.length} active${onLeave.length?' · '+onLeave.length+' on leave':''}</span>
+    <div class="cap-members">${p.team.map(m=>`<div class="cap-member"><div class="cap-av" style="background:${m.color};color:var(--text)">${m.initials}</div>${m.name.split(' ')[0]}${m.onLeave?' <span class="on-leave">leave</span>':''}</div>`).join('')}</div>
+  </div>`;
+}
+
+// ── DASHBOARD ─────────────────────────────────────────
+function renderDashboard(p){
+  const el=document.getElementById('tab-dashboard');
+  const totalHrs=p.tasks.reduce((s,t)=>s+(t.hours||0),0);
+  const doneHrs=p.tasks.filter(t=>t.done).reduce((s,t)=>s+(t.hours||0),0);
+  const statuses=[
+    {label:'Progress',val:p.progress+'%',sub:statusLabel(p.status),color:statusColor(p.status)},
+    {label:'Tasks done',val:p.tasks.filter(t=>t.done).length+'/'+p.tasks.length,sub:'Completed',color:'var(--text)'},
+    {label:'Hours logged',val:doneHrs+'h',sub:'of '+totalHrs+'h total',color:'var(--text)'},
+    {label:'Open risks',val:p.risks.filter(r=>r.level==='High').length,sub:p.risks.length+' total risks',color:p.risks.some(r=>r.level==='High')?'#dc2626':'#16a374'}
+  ];
+  el.innerHTML=renderCapacityBar(p)+`
+  <div class="metrics-row">${statuses.map(s=>`<div class="metric-card"><div class="mc-label">${s.label}</div><div class="mc-val" style="color:${s.color}">${s.val}</div><div class="mc-sub">${s.sub}</div></div>`).join('')}</div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title-row"><span class="card-title">Progress & insights</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12.5px">${p.name}</span><span style="font-size:11px;color:var(--text3)">${p.progress}%</span></div>
+      <div style="height:4px;background:var(--surface2);border-radius:2px;margin-bottom:12px"><div style="height:100%;border-radius:2px;width:${p.progress}%;background:${p.color}"></div></div>
+      ${p.status==='behind'?'<div class="insight-item ins-w"><div class="ii-icon">!</div><div><div class="ii-text">Project is behind schedule</div><div class="ii-sub">Consider reallocating resources</div></div></div>':''}
+      ${p.status==='on-track'?'<div class="insight-item ins-g"><div class="ii-icon">✓</div><div><div class="ii-text">Project is on track</div><div class="ii-sub">Maintain current velocity</div></div></div>':''}
+      ${p.risks.some(r=>r.level==='High')?`<div class="insight-item ins-w"><div class="ii-icon">!</div><div><div class="ii-text">${p.risks.filter(r=>r.level==='High').length} high-priority risks</div><div class="ii-sub">${p.risks.find(r=>r.level==='High').text}</div></div></div>`:''}
+      <div class="insight-item ins-b"><div class="ii-icon">★</div><div><div class="ii-text">${p.tasks.filter(t=>t.done).length}/${p.tasks.length} tasks done · ${doneHrs}h of ${totalHrs}h delivered</div></div></div>
+    </div>
+    <div class="card" id="dash-notes-${p.id}">
+      <div class="card-title-row"><span class="card-title">Stakeholder notes</span></div>
+      ${p.notes&&p.notes.length?p.notes.map(n=>`<div style="padding:7px 0;border-bottom:1px solid var(--border)"><div style="display:flex;gap:6px;margin-bottom:3px"><span style="font-size:10px;padding:1px 7px;border-radius:5px;background:#eff6ff;color:#1e40af;font-weight:500">${n.category}</span><span style="font-size:11px;color:var(--text3)">${n.date}</span></div><div style="font-size:12.5px;font-weight:500">${n.title}</div><div style="font-size:12px;color:var(--text2);margin-top:2px;line-height:1.5">${n.content}</div></div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">No notes yet. Ask the AI assistant to record stakeholder feedback.</div>'}
+    </div>
+  </div>
+  <div class="three-col">
+    ${renderTasksCard(p)}
+    ${renderRisksCard(p)}
+    ${renderTeamCard(p)}
+  </div>`;
+}
+
+function renderTasksCard(p){
+  const totalSP=p.tasks.reduce((s,t)=>s+(t.storyPoints||0),0);
+  return `<div class="card" id="tasks-card-${p.id}">
+    <div class="card-title-row">
+      <span class="card-title">Tasks (${p.tasks.length}) · ${p.tasks.reduce((s,t)=>s+(t.hours||0),0)}h${totalSP?' · '+totalSP+' pts':''}</span>
+      <div style="display:flex;gap:4px;align-items:center">
+        <div style="position:relative">
+          <button class="ellipsis-btn" onclick="toggleDD('task-dd-${p.id}',event)" title="Task options">···</button>
+          <div class="dropdown" id="task-dd-${p.id}">
+            <div class="dd-item" onclick="openAddTaskModal(${p.id});closeModal('task-dd-${p.id}')">+ Add new task</div>
+            <div class="dd-item" onclick="markAllTasksDone(${p.id})">✓ Mark all done</div>
+            <div class="dd-item" onclick="clearDoneTasks(${p.id})">Clear completed</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    ${p.tasks.map(t=>`
+    <div class="task-row" onclick="openTaskModal(${p.id},'${t.id}')">
+      <div class="tchk ${t.done?'done':''}" onclick="event.stopPropagation();toggleTask(${p.id},'${t.id}',this)">${t.done?'<svg width="9" height="9" viewBox="0 0 9 9"><path d="M1.5 4.5l2 2L7.5 2" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>':''}</div>
+      <div class="task-main">
+        <div class="task-name-text ${t.done?'done':''}">${t.text}</div>
+        <div class="task-chips">
+          ${t.due_date?`<span class="chip-sm" style="background:#f0fdf4;color:#166534">Due ${t.due_date}</span>`:''}
+          ${t.hours?`<span class="chip-sm" style="background:#eff6ff;color:#1e40af">${t.hours}h</span>`:''}
+          ${t.storyPoints?`<span class="chip-sm" style="background:#f3f0ff;color:#5b21b6">${t.storyPoints} pts</span>`:''}
+          ${t.story?`<span class="chip-sm" style="background:#fef9c3;color:#92400e">Story</span>`:''}
+        </div>
+      </div>
+      <div class="task-av" style="background:#f3f0ff;color:var(--accent)">${t.owner}</div>
+    </div>`).join('')}
+    ${p.tasks.length===0?'<div style="font-size:12px;color:var(--text3);padding:10px 0;text-align:center">No tasks yet</div>':''}
+    <button onclick="openAddTaskModal(${p.id})" style="width:100%;margin-top:8px;padding:7px;font-size:12px;background:var(--surface2);color:var(--text2);border:1px dashed var(--border-md);border-radius:var(--radius);cursor:pointer;font-family:var(--font)">+ Add task</button>
+  </div>`;
+}
+
+function renderRisksCard(p){
+  return `<div class="card" id="risks-card-${p.id}">
+    <div class="card-title-row">
+      <span class="card-title">Risk radar (${p.risks.length})</span>
+      <div style="position:relative">
+        <button class="ellipsis-btn" onclick="toggleDD('risk-dd-${p.id}',event)">···</button>
+        <div class="dropdown" id="risk-dd-${p.id}">
+          <div class="dd-item" onclick="openAddRiskModal(${p.id})">+ Add new risk</div>
+        </div>
+      </div>
+    </div>
+    ${p.risks.map(r=>`
+    <div class="risk-row">
+      <span class="rpill" style="background:${r.level==='High'?'#fee2e2':r.level==='Med'?'#fef3c7':'#f0fdf4'};color:${r.level==='High'?'#991b1b':r.level==='Med'?'#92400e':'#166534'}">${r.level}</span>
+      <span style="flex:1;color:var(--text)">${r.text}</span>
+      <button onclick="openEditRiskModal(${p.id},'${r.id}')" style="font-size:11px;padding:2px 8px;border:1px solid var(--border-md);border-radius:5px;background:transparent;color:var(--text3);cursor:pointer;font-family:var(--font)">Edit</button>
+    </div>`).join('')}
+    ${p.risks.length===0?'<div style="font-size:12px;color:var(--text3);padding:10px 0">No risks recorded</div>':''}
+    <button onclick="openAddRiskModal(${p.id})" style="width:100%;margin-top:8px;padding:7px;font-size:12px;background:var(--surface2);color:var(--text2);border:1px dashed var(--border-md);border-radius:var(--radius);cursor:pointer;font-family:var(--font)">+ Add risk</button>
+  </div>`;
+}
+
+function renderTeamCard(p){
+  const totalCap=p.team.reduce((s,m)=>s+(m.hours||0),0);
+  return `<div class="card" id="team-card-${p.id}">
+    <div class="card-title-row">
+      <span class="card-title">Team · ${totalCap}h capacity</span>
+      <div style="position:relative">
+        <button class="ellipsis-btn" onclick="toggleDD('team-dd-${p.id}',event)">···</button>
+        <div class="dropdown" id="team-dd-${p.id}">
+          <div class="dd-item" onclick="openAddMemberModal(${p.id})">+ Add team member</div>
+        </div>
+      </div>
+    </div>
+    ${p.team.map(m=>`
+    <div class="team-row">
+      <div class="team-av" style="background:${m.color};color:var(--text)">${m.initials}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+          <span style="font-size:12.5px">${m.name}</span>
+          ${m.onLeave?`<span class="on-leave">On leave${m.leaveDates?' '+m.leaveDates:''}</span>`:''}
+        </div>
+        ${m.role?`<div style="font-size:11px;color:var(--text3)">${m.role}${m.hours?' · '+m.hours+'h/wk':''}</div>`:''}
+      </div>
+      <div class="wbar" style="width:60px"><div class="wfill" style="width:${m.onLeave?0:m.load}%;background:${m.load>85?'#dc2626':m.load>70?'#d97706':'#16a374'}"></div></div>
+      <span style="font-size:11px;color:var(--text3);width:28px;text-align:right">${m.onLeave?'—':m.load+'%'}</span>
+      <button onclick="openEditMemberModal(${p.id},'${m.id}')" style="font-size:11px;padding:2px 8px;border:1px solid var(--border-md);border-radius:5px;background:transparent;color:var(--text3);cursor:pointer;font-family:var(--font)">Edit</button>
+    </div>`).join('')}
+    <button onclick="openAddMemberModal(${p.id})" style="width:100%;margin-top:8px;padding:7px;font-size:12px;background:var(--surface2);color:var(--text2);border:1px dashed var(--border-md);border-radius:var(--radius);cursor:pointer;font-family:var(--font)">+ Add member</button>
+  </div>`;
+}
+
+// ── TASK MODAL ────────────────────────────────────────
+function openAddTaskModal(projId){
+  editingTaskId=null;editingMemberId=null;
+  const p=getProject(projId);
+  document.getElementById('tmTitle').textContent='New task — '+p.name;
+  document.getElementById('tmName').value='';
+  document.getElementById('tmOwner').value='';
+  document.getElementById('tmDue').value='';
+  document.getElementById('tmHours').value='';
+  document.getElementById('tmStatus').value='pending';
+  document.getElementById('tmStoryPoints').value='';
+  document.getElementById('tmStory').value='';
+  document.getElementById('tmDesc').value='';
+  document.getElementById('tmDeleteBtn').style.display='none';
+  document.getElementById('taskModal').dataset.projId=projId;
+  openModal('taskModal');
+}
+function openTaskModal(projId,taskId){
+  const p=getProject(projId);const t=p.tasks.find(t=>t.id===taskId);if(!t)return;
+  editingTaskId=taskId;
+  document.getElementById('tmTitle').textContent=t.text;
+  document.getElementById('tmName').value=t.text;
+  document.getElementById('tmOwner').value=t.owner||'';
+  document.getElementById('tmDue').value=t.due_date||'';
+  document.getElementById('tmHours').value=t.hours||'';
+  document.getElementById('tmStatus').value=t.done?'done':'pending';
+  document.getElementById('tmStoryPoints').value=t.storyPoints||'';
+  document.getElementById('tmStory').value=t.story||'';
+  document.getElementById('tmDesc').value=t.description||'';
+  document.getElementById('tmDeleteBtn').style.display='inline-block';
+  document.getElementById('tmDeleteBtn').onclick=()=>deleteTask(projId,taskId);
+  document.getElementById('taskModal').dataset.projId=projId;
+  openModal('taskModal');
+}
+function saveTask(){
+  const projId=parseInt(document.getElementById('taskModal').dataset.projId);
+  const p=getProject(projId);
+  const name=document.getElementById('tmName').value.trim();if(!name)return;
+  const ownerVal=document.getElementById('tmOwner').value.trim();
+  const ownerInitials=ownerVal?ownerVal.trim().split(/\s+/).filter(w=>w).map(w=>w[0]).join('').toUpperCase().slice(0,2)||ownerVal.toUpperCase().slice(0,2):'TL';
+  const taskData={
+    text:name,owner:ownerInitials,
+    due_date:document.getElementById('tmDue').value.trim(),
+    hours:parseInt(document.getElementById('tmHours').value)||null,
+    storyPoints:parseInt(document.getElementById('tmStoryPoints').value)||null,
+    done:document.getElementById('tmStatus').value==='done',
+    story:document.getElementById('tmStory').value.trim(),
+    description:document.getElementById('tmDesc').value.trim()
+  };
+  if(editingTaskId){Object.assign(p.tasks.find(t=>t.id===editingTaskId),taskData);}
+  else{p.tasks.push({id:uid(),...taskData});}
+  closeModal('taskModal');renderDashboard(p);renderSidebar();
+}
+function deleteTask(projId,taskId){
+  const p=getProject(projId);p.tasks=p.tasks.filter(t=>t.id!==taskId);
+  closeModal('taskModal');renderDashboard(p);
+}
+function toggleTask(projId,taskId,el){
+  const p=getProject(projId);const t=p.tasks.find(t=>t.id===taskId);
+  t.done=!t.done;el.classList.toggle('done',t.done);
+  el.innerHTML=t.done?'<svg width="9" height="9" viewBox="0 0 9 9"><path d="M1.5 4.5l2 2L7.5 2" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>':'';
+  el.closest('.task-row').querySelector('.task-name-text').classList.toggle('done',t.done);
+}
+function markAllTasksDone(projId){const p=getProject(projId);p.tasks.forEach(t=>t.done=true);renderDashboard(p);}
+function clearDoneTasks(projId){const p=getProject(projId);p.tasks=p.tasks.filter(t=>!t.done);renderDashboard(p);}
+
+// ── RISK MODAL ────────────────────────────────────────
+function openAddRiskModal(projId){
+  editingRiskId=null;
+  document.getElementById('rmTitle').textContent='Add risk';
+  document.getElementById('rmText').value='';document.getElementById('rmLevel').value='Med';
+  document.getElementById('rmDeleteBtn').style.display='none';
+  document.getElementById('riskModal').dataset.projId=projId;openModal('riskModal');
+}
+function openEditRiskModal(projId,riskId){
+  const p=getProject(projId);const r=p.risks.find(r=>r.id===riskId);if(!r)return;
+  editingRiskId=riskId;
+  document.getElementById('rmTitle').textContent='Edit risk';
+  document.getElementById('rmText').value=r.text;document.getElementById('rmLevel').value=r.level;
+  document.getElementById('rmDeleteBtn').style.display='inline-block';
+  document.getElementById('rmDeleteBtn').onclick=()=>{const p=getProject(projId);p.risks=p.risks.filter(r=>r.id!==riskId);closeModal('riskModal');renderDashboard(p);};
+  document.getElementById('riskModal').dataset.projId=projId;openModal('riskModal');
+}
+function saveRisk(){
+  const projId=parseInt(document.getElementById('riskModal').dataset.projId);
+  const p=getProject(projId);
+  const txt=document.getElementById('rmText').value.trim();if(!txt)return;
+  const lvl=document.getElementById('rmLevel').value;
+  if(editingRiskId){const r=p.risks.find(r=>r.id===editingRiskId);r.text=txt;r.level=lvl;}
+  else{p.risks.push({id:uid(),text:txt,level:lvl});}
+  closeModal('riskModal');renderDashboard(p);
+}
+
+// ── MEMBER MODAL ──────────────────────────────────────
+function openAddMemberModal(projId){
+  editingMemberId=null;
+  document.getElementById('mmTitle').textContent='Add team member';
+  ['mmName','mmInitials','mmRole','mmLeaveDates','mmNotes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mmLoad').value=70;document.getElementById('mmHours').value=40;
+  document.getElementById('mmLeave').value='no';
+  document.getElementById('mmDeleteBtn').style.display='none';
+  document.getElementById('memberModal').dataset.projId=projId;openModal('memberModal');
+}
+function openEditMemberModal(projId,memberId){
+  const p=getProject(projId);const m=p.team.find(m=>m.id===memberId);if(!m)return;
+  editingMemberId=memberId;
+  document.getElementById('mmTitle').textContent='Edit — '+m.name;
+  document.getElementById('mmName').value=m.name;
+  document.getElementById('mmInitials').value=m.initials||(m.name.trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2));
+  document.getElementById('mmRole').value=m.role||'';
+  document.getElementById('mmLoad').value=m.load;
+  document.getElementById('mmHours').value=m.hours||40;
+  document.getElementById('mmLeave').value=m.onLeave?'yes':'no';
+  document.getElementById('mmLeaveDates').value=m.leaveDates||'';
+  document.getElementById('mmNotes').value=m.notes||'';
+  document.getElementById('mmDeleteBtn').style.display='inline-block';
+  document.getElementById('mmDeleteBtn').onclick=()=>{p.team=p.team.filter(m=>m.id!==memberId);closeModal('memberModal');renderDashboard(p);};
+  document.getElementById('memberModal').dataset.projId=projId;openModal('memberModal');
+}
+function saveMember(){
+  const projId=parseInt(document.getElementById('memberModal').dataset.projId);
+  const p=getProject(projId);
+  const name=document.getElementById('mmName').value.trim();if(!name)return;
+  const memberData={
+    name,initials:document.getElementById('mmInitials').value.trim().toUpperCase().slice(0,2)||(name.trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2)),
+    role:document.getElementById('mmRole').value.trim(),
+    load:parseInt(document.getElementById('mmLoad').value)||70,
+    hours:parseInt(document.getElementById('mmHours').value)||40,
+    onLeave:document.getElementById('mmLeave').value==='yes',
+    leaveDates:document.getElementById('mmLeaveDates').value.trim(),
+    notes:document.getElementById('mmNotes').value.trim(),
+    color:'#ede9fe'
+  };
+  if(editingMemberId){Object.assign(p.team.find(m=>m.id===editingMemberId),memberData);}
+  else{p.team.push({id:uid(),...memberData});}
+  closeModal('memberModal');renderDashboard(p);renderSidebar();
+}
+
+// ── AI ASSISTANT ─────────────────────────────────────
+function renderAssistant(p){
+  const el=document.getElementById('tab-assistant');
+  el.innerHTML=`<div style="display:flex;flex-direction:column;gap:12px">
+    <div class="card">
+      <div class="card-title-row">
+        <span class="card-title">AI assistant — ${p.name}</span>
+        <button onclick="clearChat(${p.id})" style="font-size:11px;padding:4px 10px;border:1px solid var(--border-md);border-radius:6px;background:transparent;color:var(--text3);cursor:pointer;font-family:var(--font)">Clear chat</button>
+      </div>
+      <div style="font-size:12px;padding:8px 12px;background:#eeedfe;border-radius:var(--radius);color:#3730a3;margin-bottom:10px;line-height:1.6">
+        <strong>Actions (instant):</strong> "Add task: [name], due 5/15, 10 hours, story: [text], description: [text]" · "Mark task [name] done" · "Add risk: [text]" · "Add team member: [name], on leave May 10-20" · "Update progress to 70%" · "Stakeholder feedback: [text]"<br>
+        <strong>Questions (AI):</strong> "What are my risks?" · "Will we finish on time?" · "Who is overloaded?"
+      </div>
+      <div class="quick-chips">
+        <div class="chip" onclick="sendMsg(${p.id},'What are the main risks?')">Main risks</div>
+        <div class="chip" onclick="sendMsg(${p.id},'Who is overloaded on the team?')">Team load</div>
+        <div class="chip" onclick="sendMsg(${p.id},'What should I prioritize this week?')">This week</div>
+        <div class="chip" onclick="sendMsg(${p.id},'Predict if we finish on time.')">Deadline forecast</div>
+        <div class="chip" style="background:#f0fdf4;color:#166534;border-color:#bbf7d0" onclick="quickTestTask(${p.id})">✓ Test engine</div>
+      </div>
+      <div id="chat-${p.id}" class="chat-messages" style="min-height:180px"></div>
+      <div class="chat-input-row">
+        <input id="chatIn-${p.id}" type="text" placeholder='e.g. "Add task: Get Requirements, due 5/15, 10 hours, description: Connect with stakeholders"' onkeydown="if(event.key==='Enter')sendMsg(${p.id})"/>
+        <button class="send-btn" id="sendBtn-${p.id}" onclick="sendMsg(${p.id})">Send</button>
+      </div>
+    </div>
+    <div class="card" id="live-tasks-${p.id}"></div>
+  </div>`;
+  restoreChat(p.id);
+  refreshLiveTasks(p);
+}
+
+function addChatMsg(wrap,text,role){
+  const d=document.createElement('div');
+  d.className='cmsg cmsg-'+(role==='user'?'user':role==='ai thinking'?'ai thinking':'ai');
+  d.textContent=text;
+  wrap.appendChild(d);
+  wrap.scrollTop=wrap.scrollHeight;
+  // Only save user messages here; AI replies saved in sendMsg after final text is set
+  if(role==='user'&&currentProjectId){
+    if(!chatHistory[currentProjectId])chatHistory[currentProjectId]=[];
+    chatHistory[currentProjectId].push({role:'user',text});
+  }
+  return d;
+}
+
+function restoreChat(projId){
+  const wrap=document.getElementById('chat-'+projId);
+  if(!wrap)return;
+  const hist=chatHistory[projId]||[];
+  if(hist.length===0){
+    // Show welcome message only on first open
+    const p=getProject(projId);
+    addChatMsg(wrap,'Hi! I\'m your AI assistant for '+p.name+'. Chat history persists while you navigate — use "Clear chat" to start fresh. I can add tasks, mark done, record risks, update team members and more — all instantly.','ai');
+    return;
+  }
+  // Restore previous messages
+  hist.forEach(msg=>{
+    const d=document.createElement('div');
+    d.className='cmsg '+(msg.role==='user'?'cmsg-user':'cmsg-ai');
+    d.textContent=msg.text;
+    wrap.appendChild(d);
+  });
+  wrap.scrollTop=wrap.scrollHeight;
+}
+
+function clearChat(projId){
+  chatHistory[projId]=[];
+  convContext[projId]=null;
+  const wrap=document.getElementById('chat-'+projId);
+  if(wrap){wrap.innerHTML='';const p=getProject(projId);addChatMsg(wrap,'Chat cleared. How can I help with '+p.name+'?','ai');}
+}
+
+function refreshLiveTasks(p){
+  const el=document.getElementById('live-tasks-'+p.id);if(!el)return;
+  el.innerHTML=`<div class="card-title-row"><span class="card-title">Live tasks (${p.tasks.length}) · ${p.tasks.reduce((s,t)=>s+(t.hours||0),0)}h</span></div>`+
+  (p.tasks.length===0?'<div style="font-size:12px;color:var(--text3)">No tasks yet</div>':
+  p.tasks.map(t=>`<div style="padding:7px 0;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:3px">
+    <div style="display:flex;align-items:center;gap:7px">
+      <div style="width:13px;height:13px;border-radius:3px;background:${t.done?'var(--accent)':'transparent'};border:1.5px solid ${t.done?'var(--accent)':'var(--border-md)'};flex-shrink:0;display:flex;align-items:center;justify-content:center">${t.done?'<svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2L7 1.5" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>':''}</div>
+      <span style="flex:1;font-size:12.5px;font-weight:500;${t.done?'text-decoration:line-through;color:var(--text3)':''}">${t.text}</span>
+      <span style="font-size:9px;background:#f3f0ff;color:var(--accent);padding:1px 5px;border-radius:4px">${t.owner}</span>
+    </div>
+    <div style="padding-left:20px;display:flex;gap:5px;flex-wrap:wrap">
+      ${t.due_date?`<span style="font-size:10px;background:#f0fdf4;color:#166534;padding:1px 6px;border-radius:4px">Due ${t.due_date}</span>`:''}
+      ${t.hours?`<span style="font-size:10px;background:#eff6ff;color:#1e40af;padding:1px 6px;border-radius:4px">${t.hours}h</span>`:''}
+      ${t.storyPoints?`<span style="font-size:10px;background:#f3f0ff;color:#5b21b6;padding:1px 6px;border-radius:4px">${t.storyPoints} pts</span>`:''}
+      ${t.story?`<span style="font-size:10px;background:#fef9c3;color:#92400e;padding:1px 6px;border-radius:4px">Story</span>`:''}
+    </div>
+    ${t.description?`<div style="padding-left:20px;font-size:11px;color:var(--text3);line-height:1.4">${t.description}</div>`:''}
+  </div>`).join(''));
+}
+
+function quickTestTask(projId){
+  const p=getProject(projId);
+  applyIntent(p,'add_task',{text:'Test task — engine working',due_date:'5/15',hours:2,owner:'TL',description:'AI engine confirmed active',story:''});
+  renderDashboard(p);refreshLiveTasks(p);
+  const wrap=document.getElementById('chat-'+projId);
+  if(wrap){addChatMsg(wrap,'✓ Test task added! Engine is working. Check the live task list below and the Dashboard tab.','ai');}
+}
+
+// ── INTENT ENGINE ─────────────────────────────────────
+function applyIntent(p,action,data){
+  if(action==='add_task'){
+    const ownerInitials=(data.owner||'TL').trim().split(/\s+/).filter(w=>w).map(w=>w[0]).join('').toUpperCase().slice(0,2)||'TL';
+    p.tasks.push({id:uid(),text:data.text,done:false,owner:ownerInitials,due_date:data.due_date||'',hours:data.hours||null,storyPoints:data.storyPoints||null,story:data.story||'',description:data.description||''});
+    return `Task added: "${data.text}"${data.due_date?' · due '+data.due_date:''}${data.hours?' · '+data.hours+'h':''}`;
+  }
+  if(action==='complete_task'){
+    const t=p.tasks.find(t=>t.text.toLowerCase().includes(data.name.toLowerCase()));
+    if(t){t.done=data.done;return `Task "${t.text}" marked as ${data.done?'done':'pending'}.`;}
+    return `Task matching "${data.name}" not found. Tasks: ${p.tasks.map(t=>'"'+t.text.slice(0,25)+'"').join(', ')}`;
+  }
+  if(action==='add_risk'){p.risks.push({id:uid(),level:data.level,text:data.text});return `Risk added [${data.level}]: "${data.text}"`;}
+  if(action==='edit_risk'){const r=p.risks.find(r=>r.text.toLowerCase().includes(data.name.toLowerCase()));if(r){if(data.level)r.level=data.level;if(data.text)r.text=data.text;return `Risk updated.`;}return 'Risk not found.';}
+  if(action==='add_member'){p.team.push({id:uid(),name:data.name,initials:(data.initials||data.name.trim().split(/\s+/).map(w=>w[0]).join('')).toUpperCase().slice(0,2),role:data.role||'',load:data.load||70,hours:data.hours||40,onLeave:data.onLeave||false,leaveDates:data.leaveDates||'',notes:data.notes||'',color:'#ede9fe'});return `Team member ${data.name} added.`;}
+  if(action==='member_leave'){const m=p.team.find(m=>m.name.toLowerCase().includes(data.name.toLowerCase()));if(m){m.onLeave=data.onLeave;if(data.leaveDates)m.leaveDates=data.leaveDates;return `${m.name} ${data.onLeave?'marked on leave'+( data.leaveDates?' ('+data.leaveDates+')':''):' marked active'}.`;}return 'Member not found.';}
+  if(action==='update_progress'){p.progress=Math.min(100,Math.max(0,data.value));return `Progress updated to ${p.progress}%.`;}
+  if(action==='add_note'){if(!p.notes)p.notes=[];p.notes.push({title:data.title,content:data.content,category:data.category||'stakeholder',date:new Date().toLocaleDateString()});return `Note recorded: "${data.title}".`;}
+  return null;
+}
+
+
+// ── HELPER: resolve "this task" / "that task" / "the last task" via context ──
+function resolveTask(p,q,projId){
+  const ql=q.toLowerCase();
+  const ctx=getCtx(projId);
+  // Pronoun references → use last touched task
+  if(/\b(this|that|the)\s+(task|one)\b|^it\b/i.test(ql)){
+    if(ctx.lastTaskId){
+      const t=p.tasks.find(t=>t.id===ctx.lastTaskId);
+      if(t) return t;
+    }
+    // Fall back to last task in list
+    return p.tasks[p.tasks.length-1]||null;
+  }
+  // Named task match
+  const named=p.tasks.find(t=>t.text.toLowerCase().includes(ql.replace(/update|task|the|for|to|assign|add|mark|done|story|points?/gi,'').trim().slice(0,30)));
+  return named||null;
+}
+
+// ── HELPER: resolve person name → always use "FirstName LastName" → initials ──
+function makeInitials(name){
+  return name.trim().split(/\s+/).filter(w=>w).map(w=>w[0]).join('').toUpperCase().slice(0,2)||'??';
+}
+
+// ── HELPER: find member by name, or auto-create them ─────────────────
+function resolveOrCreateMember(p,name,projId){
+  if(!name) return null;
+  const nl=name.toLowerCase();
+  // Try to find existing member
+  let m=p.team.find(m=>m.name.toLowerCase()===nl||
+    m.name.toLowerCase().includes(nl)||
+    nl.includes(m.name.toLowerCase().split(' ')[0].toLowerCase()));
+  if(m) return {member:m,created:false};
+  // Auto-create new member
+  const initials=makeInitials(name);
+  const newMember={id:uid(),name,initials,role:'',load:70,hours:40,onLeave:false,leaveDates:'',notes:'',color:'#ede9fe'};
+  p.team.push(newMember);
+  setCtx(projId,{lastMemberId:newMember.id});
+  return {member:newMember,created:true};
+}
+
+// ── MAIN INTENT PARSER ────────────────────────────────────────────────
+function parseAndApply(p,q,projId){
+  const msgs=[];
+  const ql=q.toLowerCase();
+  const ctx=getCtx(projId);
+
+  // ── PRE-PASS: extract person name from multiple phrasings ────────────
+  // "his/her name is X", "named X", "called X", "owner as X", "owner: X"
+  function extractPersonName(q){
+    // [A-Za-z.]* (not +) allows single-char last names like "Josh S"
+    const m=(
+      q.match(/(?:his|her|their)\s+name\s+is\s+([A-Za-z]+(?:\s+[A-Za-z.]*[A-Za-z])*)\s*(?:$|,|\.|;)/i)||
+      q.match(/(?:new\s+)?owner\s+(?:as\s+|is\s+|:\s*)([A-Z][a-z]+(?:\s+[A-Z][a-z.]*)?)/i)||
+      q.match(/assign\s+(?:\w+\s+){0,6}to\s+([A-Z][a-z]+(?:\s+[A-Z][a-z.]*)?)\s*(?:$|,|\.|\s+(?:he|she|they)\b)/i)||
+      q.match(/to\s+([A-Z][a-z]+(?:\s+[A-Z][a-z.]*)?)\s*(?:$|,|\.|\s+(?:he|she|they|is|as|and)\b)/i)||
+      q.match(/named\s+([A-Z][a-z]+(?:\s+[A-Z][a-z.]*)?)/i)||
+      q.match(/name\s*:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z.]*)?)/i)
+    );
+    return m?m[1].trim():null;
+  }
+
+  // ── PRE-PASS: resolve which task is referenced ───────────────────────
+  function resolveTargetTask(q){
+    const ql=q.toLowerCase();
+    // Pronoun / recency references
+    if(/\b(this|that|the\s+(?:new(?:ly)?|last|above|same))\s+(?:one\s+)?task|it\s+to\s+|newly\s+created|just\s+added/i.test(q)){
+      if(ctx.lastTaskId){
+        const t=p.tasks.find(t=>t.id===ctx.lastTaskId);
+        if(t) return t;
+      }
+      return p.tasks[p.tasks.length-1]||null;
+    }
+    // Named task: find best match by removing noise words
+    const noise=/\b(update|task|the|for|to|assign|add|mark|done|story|points?|new|owner|as|with|get|requirements?|design)\b/gi;
+    const cleaned=ql.replace(noise,' ').replace(/\s+/g,' ').trim();
+    if(cleaned.length>3){
+      const found=p.tasks.find(t=>t.text.toLowerCase().includes(cleaned.slice(0,20)));
+      if(found) return found;
+      // Partial word match
+      const words=cleaned.split(' ').filter(w=>w.length>3);
+      for(const w of words){
+        const f=p.tasks.find(t=>t.text.toLowerCase().includes(w));
+        if(f) return f;
+      }
+    }
+    return null;
+  }
+
+  // ── 1. UPDATE OWNER / REASSIGN ───────────────────────────────────────
+  // Catches: "update X task with new owner as Josh S", "change owner to Josh S",
+  //          "assign the newly created task to him, his name is Josh S"
+  if(/(?:new\s+)?owner\s+(?:as|is|:)|change\s+(?:the\s+)?owner|reassign|update.{0,40}owner/i.test(q)||
+     ((/assign|to\s+him|to\s+her/i.test(q))&&/name\s+is/i.test(q))){
+    const nameMatch=extractPersonName(q);
+    const person=nameMatch?nameMatch[1].trim():'';
+    if(person){
+      const result=resolveOrCreateMember(p,person,projId);
+      const initials=result.member.initials;
+      let t=resolveTargetTask(q);
+      if(!t&&p.tasks.length===1) t=p.tasks[0];
+      if(t){
+        t.owner=initials;
+        setCtx(projId,{lastTaskId:t.id,lastMemberId:result.member.id,lastAction:'assign'});
+        msgs.push('Task "'+t.text+'" owner updated to '+person+' ('+initials+').'+(result.created?' '+person+' added as new team member.':''));
+      } else if(p.tasks.length>1){
+        msgs.push('Which task should I reassign to '+person+'? Tasks: '+p.tasks.map((t,i)=>(i+1)+'. "'+t.text.slice(0,30)+'"').join(', '));
+      }
+    } else {
+      msgs.push('Please specify the new owner name. E.g. "Update task X with new owner as Josh S"');
+    }
+  }
+
+  // ── 2. CREATE MEMBER + ASSIGN (combined intent) ──────────────────────
+  // "create a new member and assign the task to him, his name is Josh S"
+  else if(/create.{0,20}member|add.{0,20}member.{0,50}assign|assign.{0,50}member/i.test(q)){
+    const nameMatch=extractPersonName(q);
+    const person=nameMatch?nameMatch[1].trim():'';
+    if(person){
+      const result=resolveOrCreateMember(p,person,projId);
+      msgs.push(person+' ('+result.member.initials+') '+(result.created?'added as new team member':'already in team')+'.');
+      // Also assign to last/referenced task
+      let t=resolveTargetTask(q);
+      if(!t&&ctx.lastTaskId) t=p.tasks.find(t=>t.id===ctx.lastTaskId);
+      if(!t&&p.tasks.length===1) t=p.tasks[0];
+      if(t){
+        t.owner=result.member.initials;
+        setCtx(projId,{lastTaskId:t.id,lastMemberId:result.member.id,lastAction:'assign'});
+        msgs.push('Task "'+t.text+'" assigned to '+person+' ('+result.member.initials+').');
+      } else if(p.tasks.length>1){
+        msgs.push('Which task should I assign to '+person+'? Tasks: '+p.tasks.map((t,i)=>(i+1)+'. "'+t.text.slice(0,30)+'"').join(', '));
+      }
+    } else {
+      msgs.push('Please provide the new member\'s name. E.g. "...his name is Josh S"');
+    }
+  }
+
+  // ── 3. ASSIGN TASK (direct: "assign X to Y") ────────────────────────
+  else if(/assign.{0,60}to\s+[A-Za-z]/i.test(q)&&!/create.{0,20}member/i.test(q)){
+    const nameMatch=extractPersonName(q);
+    const person=nameMatch?nameMatch[1].trim():'';
+    if(person){
+      const result=resolveOrCreateMember(p,person,projId);
+      let t=resolveTargetTask(q);
+      if(!t&&ctx.lastTaskId) t=p.tasks.find(t=>t.id===ctx.lastTaskId);
+      if(!t&&p.tasks.length===1) t=p.tasks[0];
+      if(t){
+        t.owner=result.member.initials;
+        setCtx(projId,{lastTaskId:t.id,lastMemberId:result.member.id,lastAction:'assign'});
+        msgs.push('Task "'+t.text+'" assigned to '+person+' ('+result.member.initials+').'+(result.created?' '+person+' added as new team member.':''));
+      } else if(p.tasks.length>1){
+        msgs.push('Which task? Tasks: '+p.tasks.map((t,i)=>(i+1)+'. "'+t.text.slice(0,30)+'"').join(', '));
+      }
+    } else {
+      msgs.push('Who should I assign the task to? E.g. "Assign this task to Josh S"');
+    }
+  }
+
+  // ── 4. ADD TASK ──────────────────────────────────────────────────────
+  else if(/add.{0,25}task|new task|create task/i.test(q)){
+    const obj=parseTask(q);
+    if(obj.ownerName&&obj.ownerName!=='TL'){
+      const result=resolveOrCreateMember(p,obj.ownerName,projId);
+      obj.owner=result.member.initials;
+      if(result.created) msgs.push(obj.ownerName+' ('+result.member.initials+') added as new team member.');
+    }
+    const newId=uid();
+    p.tasks.push({id:newId,text:obj.text,done:false,owner:obj.owner,due_date:obj.due_date||'',
+      hours:obj.hours||null,storyPoints:obj.storyPoints||null,story:obj.story||'',description:obj.description||''});
+    setCtx(projId,{lastTaskId:newId,lastAction:'add_task'});
+    const details=[];
+    if(obj.due_date) details.push('due '+obj.due_date);
+    if(obj.hours) details.push(obj.hours+'h');
+    if(obj.storyPoints) details.push(obj.storyPoints+' pts');
+    msgs.push('Task added: "'+obj.text+'"'+(details.length?' ('+details.join(', ')+')':'')+'.');
+  }
+
+  // ── 5. STORY POINTS ──────────────────────────────────────────────────
+  else if(/story\s*points?|update.{0,20}points?|points?\s*(for|to|is|are)\s*\d|^\s*\d+\s*(?:story\s*)?points?/i.test(q)){
+    const pts=q.match(/(\d+)\s*(?:story\s*)?points?/i);
+    if(pts){
+      let t=resolveTargetTask(q);
+      if(!t&&ctx.lastTaskId) t=p.tasks.find(t=>t.id===ctx.lastTaskId);
+      if(!t&&p.tasks.length===1) t=p.tasks[0];
+      if(t){
+        t.storyPoints=parseInt(pts[1]);
+        setCtx(projId,{lastTaskId:t.id,lastAction:'story_points'});
+        msgs.push('Story points for "'+t.text+'" set to '+pts[1]+'.');
+      } else if(p.tasks.length>1){
+        msgs.push('Which task? Tasks: '+p.tasks.map((t,i)=>(i+1)+'. "'+t.text.slice(0,30)+'"').join(', '));
+      }
+    }
+  }
+
+  // ── 6. MARK DONE ─────────────────────────────────────────────────────
+  else if(/\b(mark|complete|finish|close)\b.{0,60}\b(done|complete[d]?|finished)\b/i.test(q)){
+    let t=resolveTargetTask(q);
+    if(!t&&ctx.lastTaskId) t=p.tasks.find(t=>t.id===ctx.lastTaskId);
+    if(!t&&p.tasks.length===1) t=p.tasks[0];
+    if(t){
+      t.done=true;
+      setCtx(projId,{lastTaskId:t.id,lastAction:'complete'});
+      msgs.push('Task "'+t.text+'" marked as done.');
+    } else if(p.tasks.length>1){
+      msgs.push('Which task? Pending: '+p.tasks.filter(t=>!t.done).map((t,i)=>(i+1)+'. "'+t.text.slice(0,30)+'"').join(', '));
+    }
+  }
+
+  // ── 7. UPDATE TASK DESCRIPTION ───────────────────────────────────────
+  else if(/update.{0,20}task|add.{0,20}(?:note|description|detail)/i.test(q)&&
+          !/add.{0,25}task|new task|create task/i.test(q)){
+    const pct=q.match(/(\d+)\s*%/);
+    if(pct) msgs.push(applyIntent(p,'update_progress',{value:parseInt(pct[1])})||'');
+    let t=resolveTargetTask(q);
+    if(!t&&ctx.lastTaskId) t=p.tasks.find(t=>t.id===ctx.lastTaskId);
+    if(!t&&p.tasks.length===1) t=p.tasks[0];
+    if(t){
+      const noteMatch=q.match(/(?:with\s+|:\s+|—\s*)(.{10,})/i);
+      if(noteMatch&&!/owner|progress|%/i.test(noteMatch[1]))
+        t.description=(t.description?t.description+'\n':'')+noteMatch[1].trim();
+      setCtx(projId,{lastTaskId:t.id,lastAction:'update_task'});
+      msgs.push('Task "'+t.text+'" updated.');
+    } else if(!pct){
+      msgs.push('Which task? Tasks: '+p.tasks.map((t,i)=>(i+1)+'. "'+t.text.slice(0,30)+'"').join(', '));
+    }
+  }
+
+  // ── 8. UPDATE PROGRESS ───────────────────────────────────────────────
+  else if(/progress.{0,20}\d+\s*%|\d+\s*%.{0,20}progress|update.{0,15}progress|set.{0,15}progress/i.test(q)){
+    const pct=q.match(/(\d+)\s*%/);
+    if(pct) msgs.push(applyIntent(p,'update_progress',{value:parseInt(pct[1])})||'');
+  }
+
+  // ── 9. ADD RISK ───────────────────────────────────────────────────────
+  else if(/add.{0,15}risk|new risk|record.*risk/i.test(q)){
+    const lvl=/high/i.test(q)?'High':/low/i.test(q)?'Low':'Med';
+    const txt=q.replace(/add\s+(a\s+)?(high|med|medium|low)?\s*risk[:\s-]*/i,'').trim();
+    msgs.push(applyIntent(p,'add_risk',{level:lvl,text:txt})||'');
+    setCtx(projId,{lastAction:'add_risk'});
+  }
+
+  // ── 10. ON LEAVE ─────────────────────────────────────────────────────
+  else if(/on leave|going on leave|out of office|pto/i.test(q)){
+    const nm=q.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z.]+)?)\s+(?:is\s+)?(?:on\s+leave|going\s+on|out\s+of\s+office)/i)||
+             q.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z.]+)?)\s+(?:will\s+be\s+)?on\s+leave/i);
+    const dm=q.match(/(\w+\s*\d+\s*[-to]+\s*\w*\s*\d*)/i);
+    const name=nm?nm[1].trim():'';
+    if(name){
+      const result=resolveOrCreateMember(p,name,projId);
+      result.member.onLeave=true;
+      if(dm) result.member.leaveDates=dm[1].trim();
+      msgs.push(name+' marked on leave'+(dm?' ('+dm[1]+')':'')+'.');
+    } else msgs.push('Specify who is on leave. E.g. "Josh S is on leave May 10-20"');
+  }
+
+  // ── 11. RETURN FROM LEAVE ────────────────────────────────────────────
+  else if(/back from leave|returned|no longer on leave|active again/i.test(q)){
+    const nm=q.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z.]+)?)\s+(?:is\s+)?(?:back|returned|active)/i);
+    if(nm){const result=resolveOrCreateMember(p,nm[1].trim(),projId);result.member.onLeave=false;msgs.push(nm[1]+' marked active.');}
+  }
+
+  // ── 12. ADD TEAM MEMBER ───────────────────────────────────────────────
+  else if(/add.{0,15}(?:team\s+)?member|new\s+member|add.{0,15}teammate/i.test(q)){
+    const nm=q.match(/(?:add\s+(?:team\s+)?member[:\s]+)([A-Z][a-z]+(?:\s+[A-Z][a-z.]+)?)/i)||
+             q.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z.]+)?)\s+as\s+(?:new\s+)?(?:team\s+)?member/i)||
+             q.match(/(?:add|new)\s+(?:team\s+)?member[:\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z.]+)?)/i);
+    const name=nm?nm[1].trim():'';
+    if(name){
+      const roleM=q.match(/(?:as|role[:\s]+)\s*([A-Za-z][A-Za-z ]+?)(?:,|\.|$|with|\d)/i);
+      const hoursM=q.match(/(\d+)\s*(?:hours?|hrs?)/i);
+      const loadM=q.match(/(\d+)\s*%/);
+      const result=resolveOrCreateMember(p,name,projId);
+      if(roleM) result.member.role=roleM[1].trim();
+      if(hoursM) result.member.hours=parseInt(hoursM[1]);
+      if(loadM) result.member.load=parseInt(loadM[1]);
+      msgs.push(name+' ('+result.member.initials+') '+(result.created?'added to team':'already on team — updated')+'.');
+    } else msgs.push('Provide the name: "Add team member: Josh S"');
+  }
+
+  // ── 13. STAKEHOLDER NOTE ─────────────────────────────────────────────
+  else if(/stakeholder|feedback|note[:\s]|submit.*feedback/i.test(q)){
+    const cat=q.match(/stakeholder/i)?'stakeholder':q.match(/feedback/i)?'feedback':'update';
+    const title=q.replace(/^(submit|add|record)\s+(a\s+)?/i,'').split(/[.,]/)[0].slice(0,60);
+    if(!p.notes) p.notes=[];
+    p.notes.push({title,content:q,category:cat,date:new Date().toLocaleDateString()});
+    msgs.push('Note recorded: "'+title+'".');
+  }
+
+  // ── 14. DELETE TASK ───────────────────────────────────────────────────
+  else if(/delete.{0,15}task|remove.{0,15}task/i.test(q)){
+    const nm=q.match(/(?:delete|remove)\s+(?:the\s+)?(?:task\s+)?(.+)/i);
+    const t=nm?p.tasks.find(t=>t.text.toLowerCase().includes(nm[1].trim().toLowerCase().slice(0,30))):null;
+    if(t){p.tasks=p.tasks.filter(tt=>tt.id!==t.id);msgs.push('Task "'+t.text+'" deleted.');}
+    else msgs.push('Task not found.');
+  }
+
+  return msgs.filter(m=>m&&m.trim());
+}
+
+function parseTask(q){
+  let text=q.replace(/^(add\s+(a\s+)?new\s+task[-:\s]*|add\s+task[-:\s]*|new\s+task[-:\s]*|create\s+task[-:\s]*)/i,'').trim();
+  const dueM=text.match(/due\s*(?:date\s*)?[:\-]?\s*([\d\/]+|[a-z]+\s+\d+)/i);
+  const due_date=dueM?dueM[1].trim():'';if(dueM)text=text.replace(dueM[0],'');
+  const hrsM=text.match(/(\d+)\s*(?:hours?|hrs?)\b/i);
+  const hours=hrsM?parseInt(hrsM[1]):null;if(hrsM)text=text.replace(hrsM[0],'');
+  const spM=text.match(/(\d+)\s*(?:story\s*)?(?:points?|sp|pts?)\b/i);
+  const storyPoints=spM?parseInt(spM[1]):null;if(spM)text=text.replace(spM[0],'');
+  const ownM=text.match(/(?:owner|assigned?\s+to|assign)[:\s]+([A-Za-z]+(?:\s+[A-Za-z.]+)?)/i);
+  const ownerName=ownM?ownM[1].trim():'';
+  const owner=ownerName?makeInitials(ownerName):'TL';
+  if(ownM)text=text.replace(ownM[0],'');
+  const storyM=text.match(/(?:user\s+story|story)[:\s]+(.+?)(?=description:|desc:|capacity:|$)/is);
+  const story=storyM?storyM[1].trim():'';if(storyM)text=text.replace(storyM[0],'');
+  const descM=text.match(/(?:description|desc|notes?)[:\s]+(.+)/is);
+  const description=descM?descM[1].replace(/,\s*(capacity|due|owner|story).*/i,'').trim():'';if(descM)text=text.replace(descM[0],'');
+  text=text.replace(/,?\s*capacity\s*allocation\s*[:\-]?/gi,'').replace(/,\s*,/g,',').replace(/^[,\s\-]+|[,\s\-]+$/g,'').trim();
+  return{text:text.split(/,(?!\s*\d)/)[0].trim()||q.slice(0,60),due_date,hours,storyPoints,ownerName,owner,story,description};
+}
+
+
+async function sendMsg(projId, prefill){
+  const inputEl=document.getElementById('chatIn-'+projId);
+  const btn=document.getElementById('sendBtn-'+projId);
+  const q=(prefill||inputEl.value).trim();
+  if(!q) return;
+  if(!prefill) inputEl.value='';
+  const p=getProject(parseInt(projId));
+  const wrap=document.getElementById('chat-'+projId);
+  if(!wrap) return;
+
+  addChatMsg(wrap, q, 'user');
+  const thinking=addChatMsg(wrap, '...', 'ai thinking');
+  if(btn) btn.disabled=true;
+
+  // Small delay so UI renders the "..." before processing
+  await new Promise(r=>setTimeout(r,50));
+
+  try{
+    const result=localNLP(p, q, parseInt(projId));
+    const reply=result.reply||'Got it!';
+    thinking.textContent=reply;
+    thinking.classList.remove('thinking');
+    // Save final AI reply to history (not the "..." placeholder)
+    if(!chatHistory[parseInt(projId)]) chatHistory[parseInt(projId)]=[];
+    chatHistory[parseInt(projId)].push({role:'ai',text:reply});
+    if(result.actions>0) showActionBadge(wrap, result.actions, p);
+  }catch(e){
+    console.error('localNLP error:', e);
+    const errMsg='Sorry, something went wrong internally. Please try again.';
+    thinking.textContent=errMsg;
+    thinking.classList.remove('thinking');
+    if(!chatHistory[parseInt(projId)]) chatHistory[parseInt(projId)]=[];
+    chatHistory[parseInt(projId)].push({role:'ai',text:errMsg});
+  }
+
+  if(btn) btn.disabled=false;
+}
+
+
+function buildSystemPrompt(p){
+  return `You are a smart, friendly AI project manager for "${p.name}".
+
+CURRENT PROJECT:
+${buildSnapshot(p)}
+
+When taking actions, include a JSON block:
+<<<ACTION>>>
+{"actions": [
+  {"type": "add_task", "text": "name", "due_date": "5/15", "hours": 10, "storyPoints": 3, "owner_name": "Josh S", "story": "", "description": ""},
+  {"type": "update_owner", "task_match": "partial name", "owner_name": "Josh S"},
+  {"type": "assign_task", "task_match": "partial name", "owner_name": "Josh S"},
+  {"type": "add_member", "name": "Josh S", "role": "", "hours": 40, "load": 70},
+  {"type": "mark_done", "task_match": "partial name"},
+  {"type": "update_story_points", "task_match": "partial name", "points": 3},
+  {"type": "add_risk", "text": "description", "level": "High"},
+  {"type": "update_progress", "value": 70},
+  {"type": "add_note", "title": "title", "content": "text", "category": "stakeholder"},
+  {"type": "member_leave", "name": "Josh S", "onLeave": true, "leaveDates": "May 10-20"},
+  {"type": "delete_task", "task_match": "partial name"},
+  {"type": "update_task_detail", "task_match": "partial name", "field": "description", "value": "text"}
+]}
+<<<END>>>
+
+Rules: Initials = first letter first name + first letter last name. Auto-create members when assigning unknown names. Keep replies to 1-3 sentences. "this task" = most recently mentioned task.`;
+}
+
+function buildMessages(projId, currentQ){
+  const hist=(chatHistory[projId]||[]).slice(-10);
+  const msgs=hist.map(m=>({role:m.role==='user'?'user':'assistant',content:m.text}));
+  msgs.push({role:'user',content:currentQ});
+  return msgs;
+}
+
+function showActionBadge(wrap,count,p){
+  renderDashboard(p); renderSidebar(); refreshLiveTasks(p);
+  const badge=document.createElement('div');
+  badge.style.cssText='display:flex;align-items:center;gap:8px;align-self:flex-start;margin-top:4px;flex-wrap:wrap';
+  const tick=document.createElement('span');
+  tick.style.cssText='font-size:11px;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:5px 10px';
+  tick.textContent='\u2713 '+count+' update'+(count>1?'s':'')+' saved';
+  const jBtn=document.createElement('button');
+  jBtn.style.cssText='font-size:11px;padding:5px 10px;background:#eeedfe;color:#534AB7;border:1px solid #afa9ec;border-radius:6px;cursor:pointer;font-family:var(--font)';
+  jBtn.textContent='View dashboard \u2192';
+  jBtn.onclick=jumpToDashboard;
+  badge.appendChild(tick); badge.appendChild(jBtn);
+  wrap.appendChild(badge); wrap.scrollTop=wrap.scrollHeight;
+}
+
+// ── LOCAL NLP ENGINE (works 100% offline, no API needed) ─────────────
+function localNLP(p, q, projId){
+  const ctx=getCtx(projId);
+  const ql=q.toLowerCase();
+  let actions=0;
+  const replies=[];
+
+  // ── PENDING ACTION RESOLVER ──────────────────────────────────────────
+  // If the assistant asked a clarifying question last turn,
+  // this turn is likely the user's answer — resolve it first.
+  if(ctx.pendingAction){
+    const resolved=resolvePending(p, q, projId, ctx);
+    if(resolved!==null){
+      setCtx(projId,{pendingAction:null,pendingData:null});
+      return resolved;
+    }
+    // If we couldn't resolve, clear pending and continue normally
+    setCtx(projId,{pendingAction:null,pendingData:null});
+  }
+
+  // ── NAME EXTRACTOR: handles quoted, natural, possessive phrasings ────
+  function extractName(q){
+    const SKIP=/^(the|a|an|this|that|it|him|her|them|team|project|task|member|new|old|i|me|we|us)$/i;
+    // 1. Quoted name — highest priority: "Josh S" or 'Josh S'
+    const quoted=q.match(/["']([A-Za-z]+(?:\s+[A-Za-z.]+)*)["']/);
+    if(quoted&&!SKIP.test(quoted[1].trim())) return quoted[1].trim();
+    // 2. Possessive: "Josh S's task", "make Josh S the owner"
+    const poss=q.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z.]*)?)'s\b/)||
+               q.match(/(?:make|set)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z.]*)?)\s+(?:the\s+)?owner/i)||
+               q.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z.]*)?)\s+(?:should\s+(?:be\s+)?(?:the\s+)?owner|will\s+handle|is\s+(?:the\s+)?owner)/i);
+    if(poss&&!SKIP.test(poss[1].trim())) return poss[1].trim();
+    // 3. "add X to the team" — name before "to the team"
+    const addTeam=q.match(/(?:add|bring|include)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z.]*)?)\s+to\s+(?:the\s+)?team/i);
+    if(addTeam&&!SKIP.test(addTeam[1].trim())) return addTeam[1].trim();
+    // 4. "give it/the task to X" / "pass it to X"
+    const give=q.match(/(?:give|hand|pass|send)\s+(?:it\s+|him\s+|this\s+|the\s+task\s+)?to\s+([A-Z][a-z]+(?:\s+[A-Z][a-z.]*)?)/i);
+    if(give&&!SKIP.test(give[1].trim())) return give[1].trim();
+    // 5. "his/her name is X"
+    const nameIs=q.match(/(?:his|her|their)\s+name\s+is\s+([A-Za-z]+(?:\s+[A-Za-z][a-z]*)*?)(?:\s+who\b|,|\.|$)/i);
+    if(nameIs&&!SKIP.test(nameIs[1].trim())) return nameIs[1].trim();
+    // 6. "assign X to Y" or "assign ... to Y"
+    const assignTo=q.match(/assign\s+(?:\S+\s+){0,8}to\s+([A-Z][a-z]+(?:\s+[A-Z][a-z.]*)?)\s*(?:$|,|\.|\s+(?:he|she|they|who|which|is)\b)/i)||
+                   q.match(/(?:new\s+)?owner\s+(?:as|is|:)\s*([A-Z][a-z]+(?:\s+[A-Z][a-z.]*)?)\s*(?:$|,|\.|\s+(?:who|he|she)\b)/i);
+    if(assignTo&&!SKIP.test(assignTo[1].trim())) return assignTo[1].trim();
+    // 7. "to X" at end of sentence (fallback)
+    const toX=q.match(/\bto\s+([A-Z][a-z]+(?:\s+[A-Z][a-z.]*)?)\s*(?:$|,|\.|\s+(?:he|she|they|is|as|and|who|which)\b)/i);
+    if(toX&&!SKIP.test(toX[1].trim())) return toX[1].trim();
+    return null;
+  }
+
+  // ── TASK RESOLVER: finds task from context or name hint ──────────────
+  function bestTask(hint){
+    if(hint){
+      const hl=hint.toLowerCase().trim();
+      if(hl.length>3){
+        const direct=p.tasks.find(t=>t.text.toLowerCase().includes(hl));
+        if(direct) return direct;
+        const words=hl.split(/\s+/).filter(w=>w.length>3);
+        for(const w of words){
+          const f=p.tasks.find(t=>t.text.toLowerCase().includes(w));
+          if(f) return f;
+        }
+      }
+    }
+    // Fall back to last touched task from context
+    if(ctx.lastTaskId){const t=p.tasks.find(t=>t.id===ctx.lastTaskId);if(t)return t;}
+    return p.tasks[p.tasks.length-1]||null;
+  }
+
+  // ── INTENT DETECTION: flexible multi-pattern matching ───────────────
+  const isAddTask    = /\b(add|create|new)\b.{0,25}\btask\b/i.test(q);
+  const isAssign     = /\bassign\b|\bgive\b.{0,20}\btask\b|task.{0,15}(go|belongs?)\s+to|make.{0,15}owner|should\s+be\s+(the\s+)?owner|will\s+handle\s+(this|the)|handle\s+this\s+task/i.test(q);
+  const isCreateMember = /\b(create|add|make)\b.{0,25}\b(new\s+)?(team\s+)?member\b|add\s+[A-Z][a-z]+.{0,20}\bto\s+(the\s+)?team\b/i.test(q);
+  const isRemoveMember = /\b(remove|delete|kick)\b.{0,20}\b(team\s+)?member\b|\b(remove|kick)\b.{0,20}\bfrom\s+(the\s+)?team\b/i.test(q);
+  const isMarkDone   = /\b(mark|complete|finish|close|done)\b.{0,40}\b(done|complete[d]?|finished)\b|\btask\b.{0,20}\b(done|finished)\b/i.test(q);
+  const isProgress   = /\bprogress\b|\bset\b.{0,15}\d+\s*%|\bupdate\b.{0,15}\d+\s*%/i.test(q);
+  const isAddRisk    = /\badd\b.{0,15}\brisk\b|\bnew\s+risk\b/i.test(q);
+  const isLeave      = /\bon\s+leave\b|\bgoing\s+on\s+leave\b|\bout\s+of\s+office\b|\bpto\b/i.test(q);
+  const isStoryPts   = /\bstory\s*points?\b|\bpoints?\s*(for|to|is|are)\s*\d|\d+\s*(story\s*)?points?\b/i.test(q);
+  const isNote       = /\bstakeholder\b|\bfeedback\b|\brecord\s+(a\s+)?note\b/i.test(q);
+  const isQuestion   = /^(what|who|how|when|will|can|should|show|list|tell|do\s+we|are\s+we)\b/i.test(q)||/\?$/.test(q);
+  const isUserStory  = /\buser\s+stor(y|ies)\b|\badd\s+stor(y|ies)\b/i.test(q);
+  const isStatusCheck= /\bis\s+it\s+(complete|done|finished)\b|\bhas\s+(it|this|the\s+task)\s+been\s+(done|complete)\b/i.test(q);
+
+  // ── 1. ADD TASK ──────────────────────────────────────────────────────
+  if(isAddTask){
+    const taskText=q.replace(/^.*?\b(?:add|create|new)\s+(?:a\s+)?(?:new\s+)?task[-:\s]*/i,'')
+      .replace(/\b(?:due\s*(?:date\s*)?[:\-]?\s*[\d\/]+|\w+\s+\d+|capacity\s*(?:allocation\s*)?[:\-]?\s*\d+\s*h(?:ours?)?|\d+\s*h(?:ours?)?|description[:\s].+)/gi,'')
+      .replace(/,\s*,/g,',').replace(/^[,\s\-]+|[,\s\-]+$/g,'').split(',')[0].trim();
+    const due=(q.match(/due\s*(?:date\s*)?[:\-]?\s*([\d\/]+)/i)||[])[1]||'';
+    const hrs=parseInt((q.match(/(?:capacity\s*(?:allocation\s*)?[:\-]?\s*)?(\d+)\s*h(?:ours?)?/i)||[])[1])||null;
+    const desc=(q.match(/description[:\s]+(.+?)(?:$|,\s*(?:due|capacity|owner|story))/is)||[])[1]||'';
+    const storyInTask=(q.match(/user\s+stor(?:y|ies)\s*(?:detail)?[:\s]+(.+?)(?:user\s+stor(?:y|ies)\s+point|capacity|due|description|$)/is)||[])[1]||'';
+    const ownerRaw=(q.match(/\bowner[:\s]+([A-Za-z]+(?:\s+[A-Za-z.]+)?)/i)||[])[1]||'';
+    const sp=parseInt((q.match(/(\d+)\s*(?:story\s*)?(?:points?|sp)\b/i)||[])[1])||null;
+    const ownerInitials=ownerRaw?makeInitials(ownerRaw):'TL';
+    if(ownerRaw){const r=resolveOrCreateMember(p,ownerRaw,projId);if(r.created)replies.push(ownerRaw+' added to team.');}
+    const newId=uid();
+    p.tasks.push({id:newId,text:taskText||q.slice(0,50),done:false,owner:ownerInitials,
+      due_date:due,hours:hrs,storyPoints:sp,story:storyInTask.trim(),description:desc.trim()});
+    setCtx(projId,{lastTaskId:newId,lastAction:'add_task'});
+    const det=[due?'due '+due:'',hrs?hrs+'h':'',sp?sp+' pts':''].filter(Boolean);
+    replies.push('Task "'+( taskText||q.slice(0,40))+'" added'+(det.length?' ('+det.join(', ')+')':'')+'.');
+    actions++;
+    // If message ALSO assigns, handle below
+    if(!isAssign&&!isCreateMember) return {reply:replies.join(' '),actions};
+  }
+
+  // ── 2. ASSIGN / OWNER UPDATE (handles many natural phrasings) ────────
+  if(isAssign||isCreateMember){
+    const name=extractName(q);
+    if(name){
+      const r=resolveOrCreateMember(p,name,projId);
+      if(r.created) replies.push(name+' ('+r.member.initials+') added as new team member.');
+      // Find the target task
+      const taskHint=q.replace(new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),'')
+                      .replace(/assign|create|add|new|member|owner|task|him|her|this|that|give|handle|should|make|team|the|to|and|a/gi,'').trim();
+      const t=bestTask(taskHint.length>4?taskHint:null);
+      if(t){
+        t.owner=r.member.initials;
+        setCtx(projId,{lastTaskId:t.id,lastMemberId:r.member.id,lastAction:'assign'});
+        replies.push('Task "'+t.text+'" assigned to '+name+' ('+r.member.initials+').');
+        actions++;
+      } else if(!isAddTask){
+        setCtx(projId,{pendingAction:'clarify_task',pendingData:{op:'assign',name}});
+        replies.push('Got it — '+name+' '+(r.created?'added to team. ':'')+'Which task should I assign to them? '+p.tasks.map((t,i)=>(i+1)+'. "'+t.text.slice(0,35)+'"').join(', '));
+        actions+=r.created?1:0;
+      }
+    } else if(!isAddTask&&!isCreateMember){
+      replies.push(p.tasks.length?'Who should I assign this to? Give me a name.':'Add a task first, then tell me who should own it.');
+    } else if(isCreateMember&&!name){
+      replies.push('What\'s the new member\'s name? E.g. "Add team member Josh S"');
+    }
+    if(!isMarkDone&&!isProgress&&!isAddRisk&&!isLeave&&!isStoryPts&&!isNote&&!isRemoveMember){
+      return {reply:replies.filter(Boolean).join(' '),actions};
+    }
+  }
+
+  // ── 3. REMOVE TEAM MEMBER ────────────────────────────────────────────
+  if(isRemoveMember){
+    const nm=q.match(/(?:remove|delete|kick)\s+(?:team\s+)?member[:\s]+([A-Za-z]+(?:\s+[A-Za-z.]+)?)/i)||
+             q.match(/(?:remove|delete|kick)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z.]+)?)\s+(?:from|off)/i)||
+             q.match(/(?:remove|delete)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z.]+)?)\s+from\s+(?:the\s+)?team/i)||
+             q.match(/["']([A-Za-z]+(?:\s+[A-Za-z.]+)*)["']/);
+    const SKIP=/^(the|a|team|member|new|project)$/i;
+    const name=nm&&!SKIP.test(nm[1].trim())?nm[1].trim():'';
+    if(name){
+      const idx=p.team.findIndex(m=>m.name.toLowerCase().startsWith(name.toLowerCase().split(' ')[0]));
+      if(idx>=0){const removed=p.team.splice(idx,1)[0];replies.push(removed.name+' removed from team.');actions++;}
+      else replies.push('"'+name+'" not found. Team: '+p.team.map(m=>m.name).join(', '));
+    } else replies.push('Who should I remove? E.g. "Remove Josh S from team"');
+    return {reply:replies.filter(Boolean).join(' '),actions};
+  }
+
+  // ── 4. MARK TASK DONE ────────────────────────────────────────────────
+  if(isMarkDone){
+    const hint=q.replace(/mark|done|complete|finish|task|the|as|it/gi,'').trim();
+    const t=bestTask(hint.length>3?hint:null);
+    if(t){t.done=true;setCtx(projId,{lastTaskId:t.id,lastAction:'done'});replies.push('Task "'+t.text+'" marked as done.');actions++;}
+    else {
+      const pending=p.tasks.filter(t=>!t.done);
+      if(pending.length===0){replies.push('All tasks are already done!');}
+      else{
+        setCtx(projId,{pendingAction:'clarify_task',pendingData:{op:'mark_done'}});
+        replies.push('Which task is done? '+pending.map((t,i)=>(i+1)+'. "'+t.text.slice(0,35)+'"').join(', '));
+      }
+    }
+    return {reply:replies.filter(Boolean).join(' '),actions};
+  }
+
+  // ── 5. STORY POINTS ──────────────────────────────────────────────────
+  if(isStoryPts){
+    const pts=parseInt((q.match(/(\d+)\s*(?:story\s*)?points?/i)||[])[1]);
+    if(pts){
+      const hint=q.replace(/story\s*points?.*|\d+\s*points?.*/i,'').replace(/update|task|for|the|to|is|set/gi,'').trim();
+      const t=bestTask(hint.length>3?hint:null);
+      if(t){t.storyPoints=pts;setCtx(projId,{lastTaskId:t.id,lastAction:'story_points'});replies.push('Story points for "'+t.text+'" set to '+pts+'.');actions++;}
+      else if(p.tasks.length>1){
+        setCtx(projId,{pendingAction:'clarify_task',pendingData:{op:'story_points',sp:pts}});
+        replies.push('Which task should I update? '+p.tasks.map((t,i)=>(i+1)+'. "'+t.text.slice(0,35)+'"').join(', '));
+      } else replies.push('No tasks found.');
+    }
+    return {reply:replies.filter(Boolean).join(' '),actions};
+  }
+
+  // ── 6. UPDATE PROGRESS ───────────────────────────────────────────────
+  if(isProgress&&!isAddTask){
+    const pct=parseInt((q.match(/(\d+)\s*%/)||[])[1]);
+    if(pct){p.progress=Math.min(100,Math.max(0,pct));replies.push('Progress updated to '+p.progress+'%.');actions++;}
+    else replies.push('What percentage? E.g. "Set progress to 60%"');
+    return {reply:replies.filter(Boolean).join(' '),actions};
+  }
+
+  // ── 7. ADD RISK ───────────────────────────────────────────────────────
+  if(isAddRisk){
+    const lvl=/high/i.test(q)?'High':/low/i.test(q)?'Low':'Med';
+    const txt=q.replace(/add\s+(?:a\s+)?(?:high|medium|med|low)?\s*risk[:\s-]*/i,'').trim();
+    p.risks.push({id:uid(),level:lvl,text:txt});replies.push('Risk added ['+lvl+']: "'+txt.slice(0,60)+'".');actions++;
+    return {reply:replies.filter(Boolean).join(' '),actions};
+  }
+
+  // ── 8. ADD TEAM MEMBER (explicit, no assign) ─────────────────────────
+  if(isCreateMember&&!isAssign&&replies.length===0){
+    const nm=q.match(/(?:add|bring|include)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z.]*)?)\s+to\s+(?:the\s+)?team/i)||
+             q.match(/(?:add\s+(?:team\s+)?member[:\s]+)([A-Z][a-z]+(?:\s+[A-Z][a-z.]*)?)/i)||
+             q.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z.]*)?)\s+as\s+(?:new\s+)?(?:team\s+)?member/i);
+    const name=nm?nm[1].trim():'';
+    if(name){
+      const r=resolveOrCreateMember(p,name,projId);
+      const roleM=(q.match(/(?:as|role[:\s]+)\s*([A-Za-z][A-Za-z ]+?)(?:,|\.|$|\d)/i)||[])[1];
+      if(roleM) r.member.role=roleM.trim();
+      replies.push(name+' ('+r.member.initials+') '+(r.created?'added to team':'already on team — updated')+'.');
+      actions++;
+    } else replies.push('What\'s the name? E.g. "Add team member Josh S" or "Add Josh S to the team"');
+    return {reply:replies.filter(Boolean).join(' '),actions};
+  }
+
+  // ── 9. LEAVE ────────────────────────────────────────────────────────
+  if(isLeave){
+    const nm=q.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z.]*)?)\s+(?:is\s+)?(?:on\s+leave|going\s+on\s+leave|out\s+of\s+office)/i)||
+             q.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z.]*)?)\s+(?:will\s+be\s+)?on\s+leave/i);
+    const dm=(q.match(/(\w+\s*\d+\s*[-to]+\s*\w*\s*\d*)/i)||[])[1];
+    const name=nm?nm[1].trim():'';
+    if(name){const r=resolveOrCreateMember(p,name,projId);r.member.onLeave=true;if(dm)r.member.leaveDates=dm;replies.push(name+' marked on leave'+(dm?' ('+dm+')'||'':'')+'.') ;actions++;}
+    else replies.push('Who is going on leave? E.g. "Josh S is on leave May 10-20"');
+    return {reply:replies.filter(Boolean).join(' '),actions};
+  }
+
+  // ── 10. STAKEHOLDER NOTE ────────────────────────────────────────────
+  if(isNote){
+    if(!p.notes)p.notes=[];
+    const title=q.replace(/^(submit|add|record)\s+(a\s+)?/i,'').split(/[.,]/)[0].slice(0,60);
+    p.notes.push({title,content:q,category:'stakeholder',date:new Date().toLocaleDateString()});
+    replies.push('Stakeholder note recorded.');actions++;
+    return {reply:replies.filter(Boolean).join(' '),actions};
+  }
+
+  // ── 11. USER STORY ──────────────────────────────────────────────────
+  if(isUserStory&&!isAddTask){
+    // Extract story text — everything after "user story:" or "story details:"
+    const storyText=(
+      q.match(/user\s+stor(?:y|ies)\s*(?:details?\s*)?[:\-]\s*(.+)/is)||
+      q.match(/add\s+stor(?:y|ies)\s*[:\-]\s*(.+)/is)||
+      q.match(/stor(?:y|ies)\s+(?:for\s+\S+\s*[:\-]\s*)(.+)/is)||
+      q.match(/details?\s*[:\-]\s*(?!user\s+story\s+point)(.{10,})/is)
+    );
+    const storyContent=storyText?storyText[1].trim():'';
+    // Extract story points if mentioned
+    const spMatch=q.match(/(?:user\s+)?story\s+points?\s*[:\-]?\s*(\d+)/i)||q.match(/(\d+)\s+(?:user\s+)?story\s+points?/i);
+    const sp=spMatch?parseInt(spMatch[1]):null;
+    // Find the task
+    const taskHint=q.replace(/user\s+stor(y|ies)|story\s+points?|add|update|details?|point\s*\d*/gi,'').replace(/\d+/g,'').trim();
+    const t=bestTask(taskHint.length>4?taskHint:null);
+    if(t){
+      if(storyContent){t.story=storyContent;replies.push('User story saved for "'+t.text+'".');}
+      if(sp){t.storyPoints=sp;replies.push('Story points set to '+sp+'.');}
+      if(!storyContent&&!sp) replies.push('What is the user story text? E.g. "Add user story: As a user I want to..."');
+      setCtx(projId,{lastTaskId:t.id,lastAction:'user_story'});
+      actions++;
+    } else if(p.tasks.length===0){
+      replies.push('No tasks found yet. Add a task first.');
+    } else {
+      // Store pending action so next reply picks the right task
+      setCtx(projId,{pendingAction:'clarify_task',pendingData:{op:'user_story',storyContent,sp}});
+      replies.push('Which task should I add this to? '+(p.tasks.length<=5?'Tasks: '+p.tasks.map((t,i)=>(i+1)+'. "'+t.text.slice(0,35)+'"').join(', '):'Reply with the task number or name.'));
+    }
+    return {reply:replies.filter(Boolean).join(' '),actions};
+  }
+
+  // ── 12. STATUS CHECK ─────────────────────────────────────────────────
+  if(isStatusCheck){
+    const t=bestTask(null);
+    if(t){
+      replies.push('"'+t.text+'" is '+(t.done?'complete ✓':'still pending')+
+        (t.due_date?' (due '+t.due_date+')':'')+
+        (t.storyPoints?' · '+t.storyPoints+' story pts':'')+
+        (t.hours?' · '+t.hours+'h allocated':'')+'.');
+    } else if(p.tasks.length>1){
+      setCtx(projId,{pendingAction:'clarify_task',pendingData:{op:'status_check'}});
+      replies.push('Which task are you asking about? '+p.tasks.map((t,i)=>(i+1)+'. "'+t.text.slice(0,35)+'"').join(', '));
+    } else replies.push('No tasks found yet.');
+    return {reply:replies.filter(Boolean).join(' '),actions};
+  }
+
+  // ── 13. QUESTION / ANALYSIS ──────────────────────────────────────────
+  if(isQuestion||replies.length===0){
+    replies.push(answerQuestion(p,q,projId));
+  }
+
+  return {reply:replies.filter(Boolean).join(' '),actions};
+}
+
+
+// ── PENDING ACTION RESOLVER ───────────────────────────────────────────
+// Called when the assistant previously asked a clarifying question.
+// q is the user's reply. Returns a result object or null if can't resolve.
+function resolvePending(p, q, projId, ctx){
+  const pa=ctx.pendingAction;
+  const pd=ctx.pendingData||{};
+  const ql=q.toLowerCase().trim();
+
+  // Helper: pick a task by number "1", "2", "task 2", or by name fragment
+  function pickTask(q){
+    const numMatch=q.match(/^(\d+)\.?\s*/)||q.match(/\btask\s*(\d+)\b/i)||q.match(/^#(\d+)/);
+    if(numMatch){
+      const idx=parseInt(numMatch[1])-1;
+      if(idx>=0&&idx<p.tasks.length) return p.tasks[idx];
+    }
+    // Name fragment match
+    const ql=q.toLowerCase().replace(/^[\d.\s]+/,'').trim();
+    if(ql.length>2){
+      const direct=p.tasks.find(t=>t.text.toLowerCase().includes(ql));
+      if(direct) return direct;
+      const words=ql.split(/\s+/).filter(w=>w.length>3);
+      for(const w of words){
+        const f=p.tasks.find(t=>t.text.toLowerCase().includes(w));
+        if(f) return f;
+      }
+    }
+    return null;
+  }
+
+  // Helper: pick a member by number or name
+  function pickMember(q){
+    const numMatch=q.match(/^(\d+)\.?\s*/);
+    if(numMatch){const idx=parseInt(numMatch[1])-1;if(idx>=0&&idx<p.team.length)return p.team[idx];}
+    const ql=q.toLowerCase().replace(/^[\d.\s]+/,'').trim();
+    return p.team.find(m=>m.name.toLowerCase().includes(ql))||null;
+  }
+
+  // ── Resolve WHICH TASK (user_story, story_points, assign, mark_done, update) ──
+  if(pa==='clarify_task'){
+    const t=pickTask(q);
+    if(!t) return null; // can't resolve, fall through to normal parsing
+    setCtx(projId,{lastTaskId:t.id});
+    const replies=[];
+    let actions=0;
+    // Apply the stored pending operation to the found task
+    if(pd.op==='user_story'){
+      if(pd.storyContent){t.story=pd.storyContent;replies.push('User story saved for "'+t.text+'".');}
+      if(pd.sp){t.storyPoints=pd.sp;replies.push('Story points set to '+pd.sp+'.');}
+      actions++;
+    } else if(pd.op==='story_points'){
+      t.storyPoints=pd.sp;replies.push('Story points for "'+t.text+'" set to '+pd.sp+'.');actions++;
+    } else if(pd.op==='assign'){
+      const r=resolveOrCreateMember(p,pd.name,projId);
+      if(r.created)replies.push(pd.name+' added to team.');
+      t.owner=r.member.initials;
+      replies.push('Task "'+t.text+'" assigned to '+pd.name+' ('+r.member.initials+').');
+      actions++;
+    } else if(pd.op==='mark_done'){
+      t.done=true;replies.push('Task "'+t.text+'" marked as done.');actions++;
+    } else if(pd.op==='status_check'){
+      replies.push('"'+t.text+'" is '+(t.done?'complete ✓':'still pending')+
+        (t.due_date?' (due '+t.due_date+')':'')+
+        (t.storyPoints?' · '+t.storyPoints+' pts':'')+
+        (t.hours?' · '+t.hours+'h':'')+'.');
+    } else {
+      replies.push('Got it — working on "'+t.text+'".');
+    }
+    return {reply:replies.filter(Boolean).join(' '),actions};
+  }
+
+  // ── Resolve YES/NO confirmations ──────────────────────────────────────
+  if(pa==='confirm'){
+    const yes=/^(yes|yeah|yep|sure|ok|okay|do it|go ahead|correct|right|that one|confirm)/i.test(ql);
+    const no=/^(no|nope|cancel|never mind|stop|don't|dont)/i.test(ql);
+    if(yes&&pd.op==='delete_task'&&pd.taskId){
+      p.tasks=p.tasks.filter(t=>t.id!==pd.taskId);
+      return {reply:'Task deleted.',actions:1};
+    }
+    if(no) return {reply:'Okay, no changes made.',actions:0};
+    return null;
+  }
+
+  return null; // couldn't resolve
+}
+
+
+function answerQuestion(p,q,projId){
+  const ql=q.toLowerCase();
+  const done=p.tasks.filter(t=>t.done),pending=p.tasks.filter(t=>!t.done);
+  const highRisks=p.risks.filter(r=>r.level==='High');
+  const overloaded=p.team.filter(m=>!m.onLeave&&m.load>85);
+  const onLeave=p.team.filter(m=>m.onLeave);
+  const totalHrs=p.tasks.reduce((s,t)=>s+(t.hours||0),0);
+  const totalPts=p.tasks.reduce((s,t)=>s+(t.storyPoints||0),0);
+
+  if(/risk/i.test(ql)){
+    if(!p.risks.length) return 'No risks recorded yet. Say "add risk: [description]" to add one.';
+    return 'Risks for '+p.name+': '+p.risks.map(r=>'['+r.level+'] '+r.text).join(' | ')+(highRisks.length?' — '+highRisks.length+' high priority!':'');
+  }
+  if(/overload|capacity|who.*busy|team.*load/i.test(ql)){
+    if(!p.team.length) return 'No team members yet.';
+    const lines=p.team.map(m=>m.name+(m.onLeave?' (on leave)':' at '+m.load+'%'));
+    return 'Team: '+lines.join(', ')+(overloaded.length?' — '+overloaded.map(m=>m.name).join(', ')+' overloaded!':'');
+  }
+  if(/finish.*time|deadline|on\s+time|deliver/i.test(ql)){
+    const activeHrs=p.team.filter(m=>!m.onLeave).reduce((s,m)=>s+(m.hours||0),0);
+    const pendingHrs=pending.reduce((s,t)=>s+(t.hours||0),0);
+    const weeks=activeHrs>0?Math.ceil(pendingHrs/activeHrs):null;
+    return (p.progress>=75?'On track':'At risk')+' — '+p.progress+'% done, '+done.length+'/'+p.tasks.length+' tasks complete'+(weeks?' (~'+weeks+'wk remaining)':'')+(highRisks.length?', '+highRisks.length+' high risk(s) need attention':'');
+  }
+  if(/prioriti|this\s+week|focus/i.test(ql)){
+    const upcoming=pending.filter(t=>t.due_date).slice(0,3);
+    const parts=[];
+    if(highRisks.length) parts.push('Address '+highRisks.length+' high risk(s)');
+    if(upcoming.length) parts.push('Upcoming: '+upcoming.map(t=>t.text.slice(0,25)+' (due '+t.due_date+')').join(', '));
+    if(overloaded.length) parts.push('Rebalance: '+overloaded.map(m=>m.name).join(', ')+' overloaded');
+    return parts.length?parts.join(' | '):'Looking good! '+pending.length+' task(s) remaining.';
+  }
+  if(/task|backlog|todo/i.test(ql)){
+    if(!p.tasks.length) return 'No tasks yet. Say "add task: [name], due 5/15, 10 hours" to add one.';
+    return p.tasks.map(t=>(t.done?'[done]':'[todo]')+' '+t.text+(t.owner?' ['+t.owner+']':'')+(t.due_date?' due:'+t.due_date:'')+(t.storyPoints?' '+t.storyPoints+'pts':'')).join(' | ');
+  }
+  if(/team|member|who.*team/i.test(ql)){
+    if(!p.team.length) return 'No team members yet.';
+    return 'Team: '+p.team.map(m=>m.name+' ('+m.initials+')'+(m.onLeave?' on leave':' '+m.load+'%')).join(', ');
+  }
+  if(/progress|status|how.*going|summary/i.test(ql)){
+    return p.name+': '+p.progress+'% complete, '+done.length+'/'+p.tasks.length+' tasks done, '+totalHrs+'h total'+(totalPts?' '+totalPts+' story pts':'')+', '+p.team.length+' team members'+(onLeave.length?' ('+onLeave.length+' on leave)':'')+(highRisks.length?', '+highRisks.length+' high risk(s)':'')+'.';
+  }
+  return 'I can help you manage "'+p.name+'". Try: "What are my risks?", "Who is overloaded?", "Will we finish on time?", or ask me to add a task, assign work, or update the team.';
+}
+
+function buildSnapshot(p){
+  const lines=['Project: '+p.name+' | '+statusLabel(p.status)+' | '+p.progress+'%'];
+  if(p.tasks.length) lines.push('Tasks: '+p.tasks.map((t,i)=>(i+1)+'. ['+(t.done?'done':'todo')+'] "'+t.text+'" owner:'+t.owner+(t.due_date?' due:'+t.due_date:'')+(t.hours?' '+t.hours+'h':'')+(t.storyPoints?' '+t.storyPoints+'pts':'')).join(' | '));
+  if(p.team.length) lines.push('Team: '+p.team.map(m=>m.initials+':'+m.name+(m.role?' ('+m.role+')':'')+(m.onLeave?' ON LEAVE':' '+m.load+'%')).join(', '));
+  if(p.risks.length) lines.push('Risks: '+p.risks.map(r=>'['+r.level+'] '+r.text).join(' | '));
+  return lines.join('\n');
+}
+
+function makeInitials(name){
+  return name.trim().split(/\s+/).filter(w=>w).map(w=>w[0]).join('').toUpperCase().slice(0,2)||'??';
+}
+
+function resolveOrCreateMember(p,name,projId){
+  if(!name) return null;
+  const nl=name.toLowerCase().trim();
+  let m=p.team.find(m=>m.name.toLowerCase()===nl||m.name.toLowerCase().startsWith(nl.split(' ')[0]));
+  if(m) return {member:m,created:false};
+  const newM={id:uid(),name:name.trim(),initials:makeInitials(name),role:'',load:70,hours:40,onLeave:false,leaveDates:'',notes:'',color:'#ede9fe'};
+  p.team.push(newM);
+  if(projId) setCtx(projId,{lastMemberId:newM.id});
+  return {member:newM,created:true};
+}
+
+function findTask(p,match){
+  if(!match) return null;
+  const ml=match.toLowerCase().trim();
+  let t=p.tasks.find(t=>t.text.toLowerCase().includes(ml));
+  if(t) return t;
+  const words=ml.split(/\s+/).filter(w=>w.length>3);
+  for(const w of words){t=p.tasks.find(t=>t.text.toLowerCase().includes(w));if(t)return t;}
+  return null;
+}
+
+function executeActions(p,actions,projId){
+  const results=[];
+  for(const a of actions){
+    try{
+      if(a.type==='add_task'){
+        const r=a.owner_name?resolveOrCreateMember(p,a.owner_name,projId):null;
+        const newId=uid();
+        p.tasks.push({id:newId,text:a.text,done:false,owner:r?r.member.initials:'TL',due_date:a.due_date||'',hours:a.hours||null,storyPoints:a.storyPoints||null,story:a.story||'',description:a.description||''});
+        setCtx(projId,{lastTaskId:newId,lastAction:'add_task'});
+        results.push('task_added');
+      } else if(a.type==='update_owner'||a.type==='assign_task'){
+        const t=findTask(p,a.task_match)||(getCtx(projId).lastTaskId?p.tasks.find(t=>t.id===getCtx(projId).lastTaskId):null)||p.tasks[p.tasks.length-1];
+        if(t&&a.owner_name){const r=resolveOrCreateMember(p,a.owner_name,projId);t.owner=r.member.initials;setCtx(projId,{lastTaskId:t.id});results.push('assigned');}
+      } else if(a.type==='add_member'){
+        const r=resolveOrCreateMember(p,a.name,projId);
+        if(a.role) r.member.role=a.role;if(a.hours) r.member.hours=a.hours;if(a.load) r.member.load=a.load;
+        results.push('member_added');
+      } else if(a.type==='mark_done'){
+        const t=findTask(p,a.task_match)||(getCtx(projId).lastTaskId?p.tasks.find(t=>t.id===getCtx(projId).lastTaskId):null);
+        if(t){t.done=true;setCtx(projId,{lastTaskId:t.id});results.push('done');}
+      } else if(a.type==='update_story_points'){
+        const t=findTask(p,a.task_match)||(getCtx(projId).lastTaskId?p.tasks.find(t=>t.id===getCtx(projId).lastTaskId):null)||p.tasks[p.tasks.length-1];
+        if(t){t.storyPoints=parseInt(a.points);setCtx(projId,{lastTaskId:t.id});results.push('story_pts');}
+      } else if(a.type==='add_risk'){
+        p.risks.push({id:uid(),level:a.level||'Med',text:a.text});results.push('risk_added');
+      } else if(a.type==='update_progress'){
+        p.progress=Math.min(100,Math.max(0,parseInt(a.value)));results.push('progress');
+      } else if(a.type==='add_note'){
+        if(!p.notes)p.notes=[];p.notes.push({title:a.title,content:a.content,category:a.category||'update',date:new Date().toLocaleDateString()});results.push('note');
+      } else if(a.type==='member_leave'){
+        const r=resolveOrCreateMember(p,a.name,projId);r.member.onLeave=!!a.onLeave;if(a.leaveDates)r.member.leaveDates=a.leaveDates;results.push('leave');
+      } else if(a.type==='delete_task'){
+        const t=findTask(p,a.task_match);if(t){p.tasks=p.tasks.filter(tt=>tt.id!==t.id);results.push('deleted');}
+      } else if(a.type==='update_task_detail'){
+        const t=findTask(p,a.task_match)||(getCtx(projId).lastTaskId?p.tasks.find(t=>t.id===getCtx(projId).lastTaskId):null);
+        if(t&&a.field){t[a.field]=a.value;setCtx(projId,{lastTaskId:t.id});results.push('updated');}
+      }
+    }catch(e){console.warn('action error:',a,e);}
+  }
+  return results;
+}
+
+function jumpToDashboard(){
+  if(!currentProjectId) return;
+  currentTab='dashboard';
+  ['dashboard','assistant','reports','meeting','linkedin'].forEach(t=>{
+    const el=document.getElementById('tab-'+t);
+    if(el) el.style.display=t==='dashboard'?'block':'none';
+  });
+  document.querySelectorAll('.htab').forEach(b=>b.classList.toggle('active',b.textContent.trim()==='Dashboard'));
+  const p=getProject(currentProjectId);
+  if(p) renderDashboard(p);
+}
+
+// ── REPORTS ───────────────────────────────────────────
+function renderReports(p){
+  document.getElementById('tab-reports').innerHTML=`<div class="card"><div class="card-title">Status report generator — ${p.name}</div><div class="row-controls"><select id="rtype-${p.id}"><option value="weekly">Weekly status</option><option value="sprint">Sprint summary</option><option value="exec">Executive briefing</option><option value="stakeholder">Stakeholder update</option></select><button class="gen-btn" id="rgen-${p.id}" onclick="genReport(${p.id})">Generate</button></div><div id="rout-${p.id}" class="report-output empty">Report will appear here...</div><button id="rcopy-${p.id}" style="display:none" class="copy-btn" onclick="copyText('rout-${p.id}','rcopy-${p.id}','Copy')">Copy</button></div>`;
+}
+async function genReport(projId){
+  const p=getProject(projId);const rtype=document.getElementById('rtype-'+projId).value;
+  const out=document.getElementById('rout-'+projId);const btn=document.getElementById('rgen-'+projId);
+  out.classList.remove('empty');out.textContent='Generating...';btn.disabled=true;btn.textContent='...';
+  const types={weekly:'weekly status report',sprint:'sprint summary',exec:'executive briefing',stakeholder:'stakeholder update'};
+  const sys=`PM for "${p.name}" (${p.desc}). Status:${p.status} Progress:${p.progress}% Tasks:${p.tasks.map(t=>(t.done?'done':'todo')+': '+t.text+' ('+( t.hours||0)+'h)').join('; ')} Risks:${p.risks.map(r=>r.level+': '+r.text).join('; ')} Team:${p.team.map(m=>m.name+(m.onLeave?' on leave':' '+m.load+'%')).join(', ')} Write a professional ${types[rtype]}. Include: summary, progress, risks, next steps.`;
+  try{const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:900,system:sys,messages:[{role:'user',content:'Write the '+types[rtype]+' now.'}]})});const d=await res.json();out.textContent=d.error?'Error: '+d.error.message:(d.content||[]).map(b=>b.text||'').join('')||'No response.';}catch(e){out.textContent='Error: '+e.message;}
+  btn.disabled=false;btn.textContent='Generate';document.getElementById('rcopy-'+projId).style.display='inline-block';
+}
+
+// ── MEETING AI ────────────────────────────────────────
+function renderMeeting(p){
+  document.getElementById('tab-meeting').innerHTML=`<div class="card"><div class="card-title">Meeting AI — ${p.name}</div><textarea id="mtin-${p.id}" class="meeting-ta" placeholder="Paste meeting transcript here..."></textarea><button class="gen-btn" id="mtbtn-${p.id}" onclick="extractActions(${p.id})">Extract action items</button><div id="mtout-${p.id}" style="margin-top:12px"></div></div>`;
+}
+async function extractActions(projId){
+  const input=document.getElementById('mtin-'+projId).value.trim();if(!input)return;
+  const btn=document.getElementById('mtbtn-'+projId);const out=document.getElementById('mtout-'+projId);
+  btn.disabled=true;btn.textContent='Extracting...';
+  try{const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,system:'Extract action items. Return ONLY JSON array: [{task,owner,deadline,priority}]. No markdown.',messages:[{role:'user',content:'Extract from:\n'+input}]})});const d=await res.json();const txt=(d.content||[]).map(b=>b.text||'').join('');try{const items=JSON.parse(txt.replace(/```json|```/g,'').trim());out.innerHTML=`<div style="font-size:11px;color:var(--text3);margin-bottom:8px">${items.length} action items</div>`+items.map((item,i)=>{const pBg=item.priority==='High'?'#fee2e2':item.priority==='Medium'?'#fef9c3':'#f0fdf4';const pCol=item.priority==='High'?'#991b1b':item.priority==='Medium'?'#92400e':'#166534';return`<div class="action-card"><div class="ac-num">${i+1}</div><div style="flex:1;font-size:12.5px"><strong>${item.task}</strong><div style="font-size:11px;color:var(--text3);margin-top:2px">Owner: ${item.owner} · Due: ${item.deadline} · <span style="background:${pBg};color:${pCol};padding:1px 7px;border-radius:5px;font-size:10px">${item.priority}</span></div></div></div>`}).join('');}catch(e){out.innerHTML=`<div style="font-size:13px">${txt}</div>`;}}catch(e){out.innerHTML='Error: '+e.message;}
+  btn.disabled=false;btn.textContent='Extract action items';
+}
+
+// ── LINKEDIN ──────────────────────────────────────────
+function renderLinkedIn(p){
+  document.getElementById('tab-linkedin').innerHTML=`<div class="card"><div class="card-title">LinkedIn post generator — ${p.name}</div><div class="preset-btns"><button class="preset-btn" onclick="fillPrompt(${p.id},'demo')">Product demo</button><button class="preset-btn" onclick="fillPrompt(${p.id},'insight')">Thought leadership</button><button class="preset-btn" onclick="fillPrompt(${p.id},'story')">Problem-solution</button><button class="preset-btn" onclick="fillPrompt(${p.id},'launch')">Early access</button><button class="preset-btn" onclick="fillPrompt(${p.id},'milestone')">Milestone</button></div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:5px">Your custom prompt</label><textarea id="liprompt-${p.id}" class="li-prompt-area" placeholder="Describe the LinkedIn post you want — tone, angle, what to highlight..."></textarea><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="gen-btn" id="ligen-${p.id}" onclick="genLinkedIn(${p.id})">Generate post</button><button id="licopy-${p.id}" style="display:none" class="copy-btn" onclick="copyText('lipostbody-${p.id}','licopy-${p.id}','Copy post')" style="margin-top:0">Copy post</button></div><div id="liout-${p.id}" style="display:none"><div class="li-preview"><div style="display:flex;align-items:center;gap:10px;padding:14px"><div style="width:38px;height:38px;border-radius:50%;background:#2563eb;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:500">YN</div><div><div style="font-size:13px;font-weight:500">Your Name</div><div style="font-size:11px;color:var(--text3)">Building AI-powered tools · ${p.name}</div></div></div><div style="padding:0 14px 12px"><div style="background:var(--accent-light);border-radius:var(--radius);padding:24px;text-align:center"><div style="font-size:16px;font-weight:500;color:var(--accent)">${p.name}</div><div style="font-size:11px;color:var(--accent-mid)">${p.desc} · ${p.progress}% complete</div></div></div><div id="lipostbody-${p.id}" style="padding:0 14px 14px;font-size:13px;line-height:1.65;white-space:pre-wrap;color:var(--text)"></div><div style="display:flex;gap:16px;padding:10px 14px;border-top:1px solid var(--border);font-size:12px;color:var(--text3)"><span>Like</span><span>Comment</span><span>Repost</span></div></div></div><div id="liplaceholder-${p.id}" class="report-output empty">LinkedIn post preview will appear here...</div></div>`;
+}
+const PROMPTS={demo:'Write a LinkedIn post revealing a demo of an AI project management tool. Hook with a relatable problem, show the solution, end with a CTA.',insight:'Write a thought leadership post about AI changing project management. One surprising insight. End with an engaging question.',story:'Write a problem-solution story. Start with a painful PM moment, reveal the AI solution. First-person voice.',launch:'Write a post announcing early access. Create urgency. Ask people to comment "PM" to join.',milestone:'Write a post celebrating a project milestone. Acknowledge the team, share what was hard, tease what\'s next.'};
+function fillPrompt(projId,type){const p=getProject(projId);document.getElementById('liprompt-'+projId).value=PROMPTS[type]+` Context: project "${p.name}" (${p.desc}), ${p.progress}% complete, status: ${statusLabel(p.status)}.`;}
+async function genLinkedIn(projId){
+  const p=getProject(projId);const prompt=document.getElementById('liprompt-'+projId).value.trim();if(!prompt)return;
+  const btn=document.getElementById('ligen-'+projId);btn.disabled=true;btn.textContent='Generating...';
+  try{const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:700,system:`Expert LinkedIn ghostwriter. 150-220 words, short paragraphs, human tone. Max 3 hashtags. Project: "${p.name}", ${p.desc}, ${p.progress}% done.`,messages:[{role:'user',content:prompt}]})});const d=await res.json();const txt=(d.content||[]).map(b=>b.text||'').join('');document.getElementById('lipostbody-'+projId).textContent=txt;document.getElementById('liout-'+projId).style.display='block';document.getElementById('liplaceholder-'+projId).style.display='none';document.getElementById('licopy-'+projId).style.display='inline-block';}catch(e){console.error(e);}
+  btn.disabled=false;btn.textContent='Generate post';
+}
+
+// ── ADD PROJECT ───────────────────────────────────────
+function addProject(){
+  const name=document.getElementById('npName').value.trim();if(!name)return;
+  const newId=Math.max(...projects.map(p=>p.id),0)+1;
+  const lead=document.getElementById('npLead').value.trim()||'Unassigned';
+  projects.push({id:newId,name,desc:document.getElementById('npDesc').value||'No description',status:document.getElementById('npStatus').value,progress:parseInt(document.getElementById('npProgress').value)||0,lead,color:COLORS[newId%COLORS.length],notes:[],
+    tasks:[{id:uid(),text:'Set up project structure',done:false,owner:lead.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()||'TL',due_date:'',hours:4,story:'',description:''}],
+    risks:[{id:uid(),level:'Low',text:'Initial setup complexity'}],
+    team:[{id:uid(),initials:lead.trim().split(/\s+/).filter(w=>w).map(w=>w[0]).join('').toUpperCase().slice(0,2)||'TL',name:lead,role:'Project Lead',load:70,hours:40,onLeave:false,leaveDates:'',notes:'',color:'#ede9fe'}]
+  });
+  closeModal('addProjModal');['npName','npDesc','npLead'].forEach(id=>document.getElementById(id).value='');document.getElementById('npProgress').value='0';
+  renderSidebar();renderOverview();openProject(newId);
+}
+function copyText(outId,btnId,label){navigator.clipboard.writeText(document.getElementById(outId).textContent);const b=document.getElementById(btnId);b.textContent='Copied!';setTimeout(()=>b.textContent=label,2000);}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
+
+renderSidebar();renderOverview();
+</script>
+</body>
+</html>
