@@ -161,6 +161,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .meeting-ta,.li-prompt-area{width:100%;min-height:90px;padding:10px;border:1px solid var(--border-md);border-radius:var(--radius);font-family:var(--font);font-size:12.5px;background:var(--surface2);color:var(--text);resize:vertical;line-height:1.5;outline:none;margin-bottom:10px}
 .meeting-ta:focus,.li-prompt-area:focus{border-color:var(--accent)}
 .action-card{display:flex;gap:8px;padding:9px;background:var(--surface2);border-radius:var(--radius);margin-bottom:6px}
+.meeting-summary{font-size:12.5px;line-height:1.55;padding:10px 12px;background:#eff6ff;color:#1e3a5f;border-radius:var(--radius);margin-bottom:10px}
+.meeting-section-title{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 7px}
+.meeting-task{border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;margin-bottom:10px;background:var(--surface)}
+.meeting-task-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+.meeting-field label{display:block;font-size:10px;color:var(--text3);margin-bottom:3px}
+.meeting-field input,.meeting-field textarea{width:100%;padding:7px 9px;border:1px solid var(--border-md);border-radius:7px;background:var(--surface2);font:12px var(--font);color:var(--text)}
+.meeting-field textarea{min-height:58px;resize:vertical;line-height:1.4}
+.meeting-source{font-size:11px;color:var(--text3);line-height:1.45;margin-top:8px;padding:7px 9px;border-left:2px solid var(--accent-mid);background:var(--surface2)}
+.meeting-task-actions{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:9px}
+.needs-confirmation{font-size:10px;padding:2px 7px;border-radius:5px;background:#fef3c7;color:#92400e}
+@media(max-width:700px){.meeting-task-grid{grid-template-columns:1fr}}
+
 .ac-num{width:20px;height:20px;border-radius:50%;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0}
 /* LINKEDIN */
 .li-preview{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-top:14px}
@@ -354,6 +366,7 @@ let projects=[
 let currentProjectId=null,currentTab='dashboard',activeFilter=null;
 const chatHistory={};     // {projId: [{role,text}]}
 const convContext={};    // {projId: {lastTaskId, lastRiskId, lastMemberId, lastAction}}
+const meetingExtractions={}; // reviewable Meeting AI results by project
 
 function getCtx(projId){
   if(!convContext[projId]) convContext[projId]={lastTaskId:null,lastRiskId:null,lastMemberId:null,lastAction:null,pendingAction:null,pendingData:null};
@@ -1943,14 +1956,115 @@ async function genReport(projId){
 
 // ── MEETING AI ────────────────────────────────────────
 function renderMeeting(p){
-  document.getElementById('tab-meeting').innerHTML=`<div class="card"><div class="card-title">Meeting AI — ${p.name}</div><textarea id="mtin-${p.id}" class="meeting-ta" placeholder="Paste meeting transcript here..."></textarea><button class="gen-btn" id="mtbtn-${p.id}" onclick="extractActions(${p.id})">Extract action items</button><div id="mtout-${p.id}" style="margin-top:12px"></div></div>`;
+  const root=document.getElementById('tab-meeting');
+  root.innerHTML='';
+  const card=document.createElement('div');card.className='card';
+  const title=document.createElement('div');title.className='card-title';title.textContent='Meeting AI — '+p.name;
+  const help=document.createElement('div');help.style.cssText='font-size:12px;color:var(--text2);line-height:1.5;margin:8px 0 10px';
+  help.textContent='Paste rough meeting notes. AI will paraphrase the discussion, separate decisions and risks, and prepare editable tasks for your approval.';
+  const ta=document.createElement('textarea');ta.id='mtin-'+p.id;ta.className='meeting-ta';ta.placeholder='Paste meeting transcript or rough notes here...';
+  const btn=document.createElement('button');btn.className='gen-btn';btn.id='mtbtn-'+p.id;btn.textContent='Analyse meeting';btn.onclick=function(){extractActions(p.id)};
+  const out=document.createElement('div');out.id='mtout-'+p.id;out.style.marginTop='12px';
+  card.append(title,help,ta,btn,out);root.appendChild(card);
+  if(meetingExtractions[p.id])renderMeetingResults(p.id,meetingExtractions[p.id]);
 }
+
+function cleanMeetingJson(txt){
+  return txt.replace(/```json|```/gi,'').trim();
+}
+
+function normalizeMeetingResult(raw){
+  if(Array.isArray(raw))raw={summary:'Meeting analysed. Review the proposed tasks below.',decisions:[],risks:[],tasks:raw};
+  raw=raw||{};
+  return {
+    summary:raw.summary||'Meeting analysed. Review the proposed tasks below.',
+    decisions:Array.isArray(raw.decisions)?raw.decisions:[],
+    risks:Array.isArray(raw.risks)?raw.risks:[],
+    tasks:(Array.isArray(raw.tasks)?raw.tasks:[]).map(function(t){
+      return {
+        title:t.title||t.task||'Untitled task',
+        owner:t.owner||'Needs confirmation',
+        deadline:t.deadline||'Needs confirmation',
+        estimated_hours:t.estimated_hours||t.hours||'',
+        acceptance_note:t.acceptance_note||t.acceptance_criteria||t.details||'',
+        source_quote:t.source_quote||t.source||'',
+        priority:t.priority||'Medium'
+      };
+    })
+  };
+}
+
 async function extractActions(projId){
   const input=document.getElementById('mtin-'+projId).value.trim();if(!input)return;
-  const btn=document.getElementById('mtbtn-'+projId);const out=document.getElementById('mtout-'+projId);
-  btn.disabled=true;btn.textContent='Extracting...';
-  try{const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,system:'Extract action items. Return ONLY JSON array: [{task,owner,deadline,priority}]. No markdown.',messages:[{role:'user',content:'Extract from:\n'+input}]})});const d=await res.json();const txt=(d.content||[]).map(b=>b.text||'').join('');try{const items=JSON.parse(txt.replace(/```json|```/g,'').trim());out.innerHTML=`<div style="font-size:11px;color:var(--text3);margin-bottom:8px">${items.length} action items</div>`+items.map((item,i)=>{const pBg=item.priority==='High'?'#fee2e2':item.priority==='Medium'?'#fef9c3':'#f0fdf4';const pCol=item.priority==='High'?'#991b1b':item.priority==='Medium'?'#92400e':'#166534';return`<div class="action-card"><div class="ac-num">${i+1}</div><div style="flex:1;font-size:12.5px"><strong>${item.task}</strong><div style="font-size:11px;color:var(--text3);margin-top:2px">Owner: ${item.owner} · Due: ${item.deadline} · <span style="background:${pBg};color:${pCol};padding:1px 7px;border-radius:5px;font-size:10px">${item.priority}</span></div></div></div>`}).join('');}catch(e){out.innerHTML=`<div style="font-size:13px">${txt}</div>`;}}catch(e){out.innerHTML='Error: '+e.message;}
-  btn.disabled=false;btn.textContent='Extract action items';
+  const btn=document.getElementById('mtbtn-'+projId),out=document.getElementById('mtout-'+projId);
+  btn.disabled=true;btn.textContent='Analysing...';out.textContent='Turning the discussion into clear notes and reviewable tasks...';
+  const system='You are a delivery analyst helping a founder turn messy meeting notes into accurate project work. Paraphrase; do not merely split sentences. Distinguish speaker from task owner: mentioning or requesting a task does not automatically make that speaker the owner unless the notes clearly assign responsibility. Never invent an owner, deadline, effort, or acceptance criterion. Use "Needs confirmation" when unclear. Return ONLY valid JSON with this shape: {"summary":"concise paraphrased summary","decisions":["decision"],"risks":["risk"],"tasks":[{"title":"clear action title","owner":"name or Needs confirmation","deadline":"date or Needs confirmation","estimated_hours":"number or empty string","acceptance_note":"testable expected outcome","source_quote":"short exact supporting sentence","priority":"High|Medium|Low"}]}. A task title should start with a verb and the acceptance note should explain what finished means.';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,system:system,messages:[{role:'user',content:'Analyse these meeting notes:\n'+input}]})});
+    const d=await res.json();
+    if(d.error)throw new Error(d.error.message||'AI request failed');
+    const txt=(d.content||[]).map(function(b){return b.text||''}).join('');
+    const result=normalizeMeetingResult(JSON.parse(cleanMeetingJson(txt)));
+    meetingExtractions[projId]=result;renderMeetingResults(projId,result);
+  }catch(e){
+    out.innerHTML='';
+    const err=document.createElement('div');err.className='report-output';err.textContent='Could not analyse these notes: '+e.message;
+    out.appendChild(err);
+  }
+  btn.disabled=false;btn.textContent='Analyse meeting';
+}
+
+function addMeetingList(root,label,items){
+  if(!items||!items.length)return;
+  const h=document.createElement('div');h.className='meeting-section-title';h.textContent=label;root.appendChild(h);
+  items.forEach(function(item){
+    const row=document.createElement('div');row.className='action-card';
+    const dot=document.createElement('div');dot.className='ac-num';dot.textContent='•';
+    const text=document.createElement('div');text.style.cssText='font-size:12.5px;line-height:1.45';text.textContent=item;
+    row.append(dot,text);root.appendChild(row);
+  });
+}
+
+function meetingInput(label,value,kind){
+  const wrap=document.createElement('div');wrap.className='meeting-field';
+  const l=document.createElement('label');l.textContent=label;
+  const el=kind==='textarea'?document.createElement('textarea'):document.createElement('input');el.value=value||'';
+  wrap.append(l,el);return {wrap:wrap,input:el};
+}
+
+function renderMeetingResults(projId,result){
+  const out=document.getElementById('mtout-'+projId);if(!out)return;out.innerHTML='';
+  const summary=document.createElement('div');summary.className='meeting-summary';summary.textContent=result.summary;out.appendChild(summary);
+  addMeetingList(out,'Decisions',result.decisions);addMeetingList(out,'Risks and concerns',result.risks);
+  const heading=document.createElement('div');heading.className='meeting-section-title';heading.textContent='Proposed tasks — review before adding';out.appendChild(heading);
+  if(!result.tasks.length){const empty=document.createElement('div');empty.className='report-output empty';empty.textContent='No clear tasks were found. Add more context or explicitly mention the desired outcome.';out.appendChild(empty);return;}
+  result.tasks.forEach(function(task,i){
+    const card=document.createElement('div');card.className='meeting-task';
+    const top=document.createElement('div');top.style.cssText='display:flex;align-items:center;gap:8px';
+    const num=document.createElement('div');num.className='ac-num';num.textContent=i+1;
+    const caption=document.createElement('strong');caption.style.fontSize='12.5px';caption.textContent='Task '+(i+1);
+    top.append(num,caption);
+    if(task.owner==='Needs confirmation'||task.deadline==='Needs confirmation'){
+      const flag=document.createElement('span');flag.className='needs-confirmation';flag.textContent='Needs confirmation';top.appendChild(flag);
+    }
+    const title=meetingInput('Task title',task.title),owner=meetingInput('Owner',task.owner),deadline=meetingInput('Deadline',task.deadline),hours=meetingInput('Estimated hours',task.estimated_hours),acceptance=meetingInput('Acceptance note',task.acceptance_note,'textarea');
+    title.wrap.style.gridColumn='1/-1';acceptance.wrap.style.gridColumn='1/-1';
+    const grid=document.createElement('div');grid.className='meeting-task-grid';grid.append(title.wrap,owner.wrap,deadline.wrap,hours.wrap,acceptance.wrap);
+    const source=document.createElement('div');source.className='meeting-source';source.textContent=task.source_quote?'Source: “'+task.source_quote+'”':'Source sentence was not identified.';
+    const actions=document.createElement('div');actions.className='meeting-task-actions';
+    const status=document.createElement('span');status.style.cssText='font-size:11px;color:var(--text3)';
+    const add=document.createElement('button');add.className='btn-primary';add.textContent='Create task';
+    add.onclick=function(){
+      const p=getProject(projId);if(!p)return;
+      const taskTitle=title.input.value.trim();if(!taskTitle){status.textContent='Add a task title first.';return;}
+      const ownerValue=owner.input.value.trim();
+      const ownerInitials=ownerValue&&ownerValue!=='Needs confirmation'?makeInitials(ownerValue):'??';
+      const hourValue=parseInt(hours.input.value);
+      p.tasks.push({id:uid(),text:taskTitle,done:false,owner:ownerInitials,due_date:deadline.input.value==='Needs confirmation'?'':deadline.input.value.trim(),hours:Number.isFinite(hourValue)?hourValue:null,storyPoints:null,story:'',description:acceptance.input.value.trim()+(task.source_quote?'\nSource: '+task.source_quote:'')});
+      renderSidebar();status.textContent='Added to project tasks ✓';add.disabled=true;add.textContent='Task created';
+    };
+    actions.append(status,add);card.append(top,grid,source,actions);out.appendChild(card);
+  });
 }
 
 // ── LINKEDIN ──────────────────────────────────────────
